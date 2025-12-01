@@ -9,9 +9,11 @@ export default function ClosetItem({ item, onToggle, isConnected, onRemove}) {
                 <strong>Status: </strong> {item.is_checked_out ? "Checked out" : "In closet"}
             </p>
 
-            <button className="btn-check" onClick={() => onToggle(item.id)}>
-                {item.is_checked_out ? "Return to Closet" : "Check Out"}
-            </button>
+            {isConnected && (
+                <button className="btn-check" onClick={() => onToggle(item.id)}>
+                    {item.is_checked_out ? "Return to Closet" : "Check Out"}
+                </button>
+            )}
 
             <button className="btn-remove" onClick={() => onRemove(item.id)}>
                 Remove
