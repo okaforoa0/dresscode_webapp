@@ -16,7 +16,7 @@ export default function ClosetPage({
   isConnected
 }) {
   return (
-    <div>
+    <div className="fade-up">
       <h2> Clothing Stats</h2>
 
       <StatsBar items={items} />

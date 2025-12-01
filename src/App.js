@@ -205,13 +205,13 @@ function App() {
           path="/closet" 
           element={
             <div className="container">
-              <h1 className="page-title">
+              <h1 className="page-title fade-in">
                 <TbHanger className="closet-title-icon" />
                 Your Closet
               </h1>
 
               {/* connection status */}
-              <p style={{ color: isConnected ? "green" : "gray", textAlign: "center" }}>
+              <p className="fade-in" style={{ color: isConnected ? "green" : "gray", textAlign: "center" }}>
                 {isConnected
                   ? "✅ Connected to backend"
                   : "⚙️ Offline mode (local only)"}

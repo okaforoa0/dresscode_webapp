@@ -10,18 +10,18 @@ export default function HomePage() {
 
         <div className="home-overlay">
             <div className="home-hero">
-                <h1 className="page-title"> Welcome to DressCode!</h1>
-                <p className="home-tagline">Your personal wardrobe management system.</p>
+                <h1 className="page-title fade-up"> Welcome to DressCode!</h1>
+                <p className="home-tagline fade-up" >Your personal wardrobe management system.</p>
 
-                <div className="home-accent"></div>
+                <div className="home-accent fade-up" ></div>
 
-                <p className="home-desc">
+                <p className="home-desc fade-up" >
                     Track your outfits, manage your wardrobe, and keep everything
                     beautifully organized with DressCode, an RFID powered closet technology.
                 </p>
 
                 <Link to="/onboarding">
-                    <button className="home-btn">Learn How It Works</button>
+                    <button className="home-btn fade-up" >Learn How It Works</button>
                 </Link>
             </div>
         </div>
