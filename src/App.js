@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import { NavLink } from "react-router-dom";
 import { TbHanger } from "react-icons/tb";
 import GettingStarted from './pages/GettingStarted';
+import OutfitSuggestions from './pages/OutfitSuggestions';
 
 
 
@@ -232,7 +233,11 @@ function App() {
               isConnected={isConnected}
             />
           </div>
-        } 
+        }   
+      />
+      <Route 
+        path="/outfits"
+        element={<OutfitSuggestions items={items} />}
       />
     </Routes>
 </Router>
