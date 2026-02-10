@@ -4,7 +4,8 @@ export default function OutfitSuggestions({ items }) {
     const [weather, setWeather] = useState(null);
 
     useEffect(() => {
-        fetch("http://api.weatherapi.com/v1/current.json")
+        const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
+        fetch(`http://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=auto:ip`)
             .then(response => response.json())
             .then(data => setWeather(data))
             .catch(error => console.error("Error fetching weather data:", error));
