@@ -1,4 +1,25 @@
+import { useEffect, useState } from "react";
+
+const TITLE_TEXT = "Getting Started with DressCode";
+
 export default function GettingStarted() {
+  const [typedTitle, setTypedTitle] = useState("");
+
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      index += 1;
+      setTypedTitle(TITLE_TEXT.slice(0, index));
+      if (index >= TITLE_TEXT.length) {
+        clearInterval(interval);
+      }
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const isTypingComplete = typedTitle.length === TITLE_TEXT.length;
+
   const steps = [
     {
       icon: "Tag",
@@ -26,7 +47,10 @@ export default function GettingStarted() {
     <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
         <h1 className="text-center text-3xl font-semibold tracking-tight text-earth-text sm:text-4xl">
-          Getting Started with DressCode
+          {typedTitle}
+          {!isTypingComplete && (
+            <span className="ml-1 inline-block h-[1em] w-0.5 animate-pulse align-middle bg-earth-moss" />
+          )}
         </h1>
         <h2 className="mt-3 text-center text-lg font-medium text-earth-stone">
           Welcome to DressCode - Your Smart Closet Assistant
