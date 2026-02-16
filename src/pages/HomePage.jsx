@@ -117,7 +117,7 @@ export default function HomePage() {
           </div>
 
           <RevealOnScroll>
-            <div className="mx-auto max-w-3xl rounded-2xl bg-earth-card/90 p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-10">
+            <div className="mx-auto max-w-3xl rounded-2xl bg-earth-card/90 bg-white/60 p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-10">
               <h1 className="text-3xl font-semibold tracking-tight text-earth-text sm:text-5xl">
                 {typedTitle}
                 {!isTypingComplete && (
