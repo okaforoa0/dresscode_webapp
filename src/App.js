@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import ClosetPage from "./pages/ClosetPage";
 import HomePage from "./pages/HomePage";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { TbHanger } from "react-icons/tb";
 import GettingStarted from "./pages/GettingStarted";
 import OutfitSuggestions from "./pages/OutfitSuggestions";
+import AuthPage from "./pages/AuthPage";
 
 const API_URL = "http://184.73.245.154:5000";
+const DEV_BYPASS_AUTH = process.env.REACT_APP_DEV_BYPASS_AUTH === "true";
 
 function App() {
   const [items, setItems] = useState(() => {
@@ -19,8 +21,29 @@ function App() {
   const [newColor, setNewColor] = useState("");
   const [newType, setNewType] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [auth, setAuth] = useState(() => {
+    const saved = localStorage.getItem("dresscodeAuth");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const isAuthenticated = Boolean(auth?.user?.email || auth?.user?.id);
+  const canAccessProtected = isAuthenticated || DEV_BYPASS_AUTH;
+
+  function handleAuthSuccess(payload) {
+    setAuth(payload);
+    localStorage.setItem("dresscodeAuth", JSON.stringify(payload));
+  }
+
+  function handleLogout() {
+    setAuth(null);
+    setItems([]);
+    setIsConnected(false);
+    localStorage.removeItem("dresscodeAuth");
+  }
 
   useEffect(() => {
+    if (!canAccessProtected) return;
+
     fetch(`${API_URL}/items`)
       .then((res) => {
         if (res.ok) setIsConnected(true);
@@ -30,16 +53,18 @@ function App() {
         if (data && Array.isArray(data)) setItems(data);
       })
       .catch(() => console.log("Backend not available - using local data"));
-  }, []);
+  }, [canAccessProtected]);
 
   useEffect(() => {
+    if (!canAccessProtected) return;
+
     if (!isConnected) {
       localStorage.setItem("closetItems", JSON.stringify(items));
     }
-  }, [items, isConnected]);
+  }, [items, isConnected, canAccessProtected]);
 
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !canAccessProtected) return;
 
     const interval = setInterval(() => {
       fetch(`${API_URL}/items`)
@@ -55,7 +80,7 @@ function App() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isConnected]);
+  }, [isConnected, canAccessProtected]);
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -80,7 +105,7 @@ function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_id: "",
+            user_id: auth?.user?.id || "",
             rfid_tag: `${newItem.id}`,
             item_name: newName,
             color: newColor || "-",
@@ -131,7 +156,7 @@ function App() {
         <header className="sticky top-0 z-50 border-b border-earth-sand/60 bg-earth-card/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <h2 className="group flex items-center gap-2 text-xl font-semibold tracking-tight text-earth-text">
-              <TbHanger className="origin-top motion-safe:animate-hanger-intro motion-safe:group-hover:animate-hanger-swing text-2xl text-earth-moss" />
+              <TbHanger className="origin-top text-2xl text-earth-moss motion-safe:animate-hanger-intro motion-safe:group-hover:animate-hanger-swing" />
               <span>DressCode</span>
             </h2>
 
@@ -164,19 +189,60 @@ function App() {
                 Getting Started
               </NavLink>
 
-              <NavLink
-                to="/closet"
-                reloadDocument
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-earth-moss text-earth-card"
-                      : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
-                  }`
-                }
-              >
-                Closet
-              </NavLink>
+              {canAccessProtected ? (
+                <>
+                  <NavLink
+                    to="/closet"
+                    reloadDocument
+                    className={({ isActive }) =>
+                      `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-earth-moss text-earth-card"
+                          : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
+                      }`
+                    }
+                  >
+                    Closet
+                  </NavLink>
+
+                  <NavLink
+                    to="/outfits"
+                    reloadDocument
+                    className={({ isActive }) =>
+                      `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-earth-moss text-earth-card"
+                          : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
+                      }`
+                    }
+                  >
+                    Outfits
+                  </NavLink>
+
+                  {isAuthenticated && (
+                    <button
+                      onClick={handleLogout}
+                      className="rounded-lg border border-earth-sand px-3 py-2 text-sm font-medium text-earth-stone transition-all duration-200 hover:bg-earth-sand/30 hover:text-earth-text"
+                    >
+                      Logout
+                    </button>
+                  )}
+                </>
+              ) : (
+                <NavLink
+                  to="/auth"
+                  reloadDocument
+                  className={({ isActive }) =>
+                    `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? "bg-earth-moss text-earth-card"
+                        : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
+                    }`
+                  }
+                >
+                  Login
+                </NavLink>
+              )}
             </nav>
           </div>
         </header>
@@ -185,46 +251,65 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/onboarding" element={<GettingStarted />} />
+            <Route
+              path="/auth"
+              element={
+                canAccessProtected ? (
+                  <Navigate to="/closet" replace />
+                ) : (
+                  <AuthPage isAuthenticated={isAuthenticated} onAuthSuccess={handleAuthSuccess} />
+                )
+              }
+            />
 
             <Route
               path="/closet"
               element={
-                <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-                  <div className="mb-6 rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                    <h1 className="flex items-center justify-center gap-2 text-center text-3xl font-semibold tracking-tight text-earth-text">
-                      <TbHanger className="text-3xl text-earth-moss" />
-                      <span>Your Closet</span>
-                    </h1>
+                canAccessProtected ? (
+                  <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+                    <div className="mb-6 rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                      <h1 className="flex items-center justify-center gap-2 text-center text-3xl font-semibold tracking-tight text-earth-text">
+                        <TbHanger className="text-3xl text-earth-moss" />
+                        <span>Your Closet</span>
+                      </h1>
 
-                    <p
-                      className={`mt-3 text-center text-sm font-medium ${
-                        isConnected ? "text-earth-pine" : "text-earth-stone"
-                      }`}
-                    >
-                      {isConnected
-                        ? "Connected to backend"
-                        : "Offline mode (local only)"}
-                    </p>
+                      <p
+                        className={`mt-3 text-center text-sm font-medium ${
+                          isConnected ? "text-earth-pine" : "text-earth-stone"
+                        }`}
+                      >
+                        {isConnected
+                          ? "Connected to backend"
+                          : "Offline mode (local only)"}
+                      </p>
+                    </div>
+
+                    <ClosetPage
+                      items={items}
+                      newName={newName}
+                      setNewName={setNewName}
+                      newColor={newColor}
+                      setNewColor={setNewColor}
+                      newType={newType}
+                      setNewType={setNewType}
+                      handleAdd={handleAdd}
+                      onToggle={handleToggle}
+                      onRemove={handleRemove}
+                      isConnected={isConnected}
+                    />
                   </div>
-
-                  <ClosetPage
-                    items={items}
-                    newName={newName}
-                    setNewName={setNewName}
-                    newColor={newColor}
-                    setNewColor={setNewColor}
-                    newType={newType}
-                    setNewType={setNewType}
-                    handleAdd={handleAdd}
-                    onToggle={handleToggle}
-                    onRemove={handleRemove}
-                    isConnected={isConnected}
-                  />
-                </div>
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
               }
             />
 
-            <Route path="/outfits" element={<OutfitSuggestions items={items} />} />
+            <Route
+              path="/outfits"
+              element={
+                canAccessProtected ? <OutfitSuggestions items={items} /> : <Navigate to="/auth" replace />
+              }
+            />
           </Routes>
         </main>
 
@@ -251,33 +336,52 @@ function App() {
                 >
                   Getting Started
                 </NavLink>
-                <NavLink
-                  to="/closet"
-                  className="block text-earth-stone transition-colors hover:text-earth-text"
-                >
-                  Closet
-                </NavLink>
+                {canAccessProtected ? (
+                  <>
+                    <NavLink
+                      to="/closet"
+                      className="block text-earth-stone transition-colors hover:text-earth-text"
+                    >
+                      Closet
+                    </NavLink>
+                    <NavLink
+                      to="/outfits"
+                      className="block text-earth-stone transition-colors hover:text-earth-text"
+                    >
+                      Outfit Suggestions
+                    </NavLink>
+                  </>
+                ) : (
+                  <NavLink
+                    to="/auth"
+                    className="block text-earth-stone transition-colors hover:text-earth-text"
+                  >
+                    Login / Sign Up
+                  </NavLink>
+                )}
               </div>
             </div>
 
             <div>
               <h4 className="text-sm font-semibold uppercase tracking-wide text-earth-moss">
-                More
+                Account
               </h4>
               <div className="mt-3 space-y-2 text-sm">
-                <NavLink
-                  to="/outfits"
-                  className="block text-earth-stone transition-colors hover:text-earth-text"
-                >
-                  Outfit Suggestions
-                </NavLink>
-                <p className="text-earth-stone">Support</p>
-                <p className="text-earth-stone">Privacy</p>
+                {isAuthenticated ? (
+                  <>
+                    <p className="text-earth-stone">{auth?.user?.name || auth?.user?.email}</p>
+                    <p className="text-earth-stone">Signed in</p>
+                  </>
+                ) : DEV_BYPASS_AUTH ? (
+                  <p className="text-earth-stone">Dev bypass enabled (auth skipped).</p>
+                ) : (
+                  <p className="text-earth-stone">Sign in to access personalized closet data.</p>
+                )}
               </div>
             </div>
           </div>
           <div className="border-t border-earth-sand/50 px-4 py-4 text-center text-xs text-earth-stone sm:px-6 lg:px-8">
-            Copyright ©  {new Date().getFullYear()} DressCode Inc. All rights reserved.
+            Copyright © {new Date().getFullYear()} DressCode Inc. All rights reserved.
           </div>
         </footer>
       </div>
@@ -286,3 +390,4 @@ function App() {
 }
 
 export default App;
+

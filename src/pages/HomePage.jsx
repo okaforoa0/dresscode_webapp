@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import closetBg from "../assets/closet-bg.jpg";
 import { Link } from "react-router-dom";
 
 const HERO_TITLE = "Welcome to DressCode";
@@ -59,13 +58,64 @@ export default function HomePage() {
   const isTypingComplete = typedTitle.length === HERO_TITLE.length;
 
   return (
-    <div className="bg-earth-bg">
-      <section
-        className="relative flex min-h-[calc(100vh-72px)] items-center bg-cover bg-center bg-no-repeat px-4 py-14 sm:px-6 lg:px-8"
-        style={{ backgroundImage: `url(${closetBg})` }}
-      >
-        <div className="absolute inset-0 bg-earth-pine/20" />
-        <div className="relative mx-auto w-full max-w-6xl">
+    <div className="relative overflow-hidden bg-gradient-to-br from-[#f6f1e9] via-earth-bg to-[#e9e2d6]">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 top-0 h-96 w-96 bg-earth-sage/30 blur-3xl motion-safe:animate-lava-one" />
+        <div className="absolute right-[-8rem] top-40 h-[28rem] w-[28rem] bg-earth-sand/35 blur-3xl motion-safe:animate-lava-two" />
+        <div className="absolute left-[18%] top-[36rem] h-80 w-80 bg-earth-moss/20 blur-3xl motion-safe:animate-lava-three" />
+        <div className="absolute right-[10%] top-[72rem] h-96 w-96 bg-earth-sage/20 blur-3xl motion-safe:animate-lava-one" />
+        <div className="absolute -left-20 bottom-12 h-[24rem] w-[24rem] bg-earth-sand/28 blur-3xl motion-safe:animate-lava-two" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(255,255,255,0.48),transparent_38%),radial-gradient(circle_at_82%_22%,rgba(203,187,165,0.24),transparent_40%),radial-gradient(circle_at_30%_84%,rgba(111,127,104,0.16),transparent_40%)]" />
+      </div>
+
+      <section className="relative z-10 flex min-h-[calc(100vh-72px)] items-center px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="pointer-events-none absolute inset-0 hidden lg:block">
+            <div className="absolute left-[8%] top-[22%] rounded-full border border-earth-sand/70 bg-earth-card/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-earth-moss shadow-sm backdrop-blur-sm motion-safe:animate-float-drift">
+              RFID Ready
+            </div>
+            <div
+              className="absolute right-[10%] top-[20%] rounded-full border border-earth-sand/70 bg-earth-card/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-earth-moss shadow-sm backdrop-blur-sm motion-safe:animate-float-drift-alt"
+              style={{ animationDelay: "0.9s" }}
+            >
+              Live Closet Status
+            </div>
+            <div
+              className="absolute left-[12%] top-[62%] rounded-full border border-earth-sand/70 bg-earth-card/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-earth-moss shadow-sm backdrop-blur-sm motion-safe:animate-float-drift-alt"
+              style={{ animationDelay: "0.5s" }}
+            >
+              Outfit Suggestions
+            </div>
+            <div
+              className="absolute right-[12%] top-[64%] rounded-full border border-earth-sand/70 bg-earth-card/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-earth-moss shadow-sm backdrop-blur-sm motion-safe:animate-float-drift"
+              style={{ animationDelay: "1.1s" }}
+            >
+              Offline Mode
+            </div>
+
+            <div
+              className="absolute left-[6%] top-[40%] w-44 rounded-xl border border-earth-sand/50 bg-earth-card/78 p-4 shadow-sm backdrop-blur-sm motion-safe:animate-float-drift"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-earth-stone">
+                Smart Tracking
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-earth-text">24/7</p>
+              <p className="mt-1 text-xs text-earth-stone">Closet visibility</p>
+            </div>
+
+            <div
+              className="absolute right-[6%] top-[38%] w-44 rounded-xl border border-earth-sand/50 bg-earth-card/78 p-4 shadow-sm backdrop-blur-sm motion-safe:animate-float-drift-alt"
+              style={{ animationDelay: "1.3s" }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-earth-stone">
+                Setup Speed
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-earth-text">&lt;10m</p>
+              <p className="mt-1 text-xs text-earth-stone">Get started fast</p>
+            </div>
+          </div>
+
           <RevealOnScroll>
             <div className="mx-auto max-w-3xl rounded-2xl bg-earth-card/90 p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-10">
               <h1 className="text-3xl font-semibold tracking-tight text-earth-text sm:text-5xl">
@@ -101,12 +151,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <section className="relative z-10 mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <RevealOnScroll>
           <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
             <h2 className="text-2xl font-semibold text-earth-text">What DressCode Is</h2>
             <p className="mt-4 max-w-4xl text-sm leading-7 text-earth-stone sm:text-base">
-              DressCode is a smart closet dashboard that helps you keep track of what you
+              DressCode is a smart closet system that helps you keep track of what you
               own, what is currently checked out, and what is available to wear. It turns
               your wardrobe into a clear, searchable system.
             </p>
@@ -152,7 +202,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-earth-sand/40 bg-earth-card/60 px-4 py-14 sm:px-6 lg:px-8">
+      <section className="relative z-10 border-y border-earth-sand/40 bg-earth-card/60 px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-6xl gap-6 md:grid-cols-2">
           <RevealOnScroll>
             <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
