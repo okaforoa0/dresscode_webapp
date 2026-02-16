@@ -127,11 +127,11 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100 text-gray-800">
-        <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
+      <div className="min-h-screen bg-earth-bg text-earth-text">
+        <header className="sticky top-0 z-50 border-b border-earth-sand/60 bg-earth-card/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-900">
-              <TbHanger className="text-2xl text-slate-700" />
+            <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-earth-text">
+              <TbHanger className="text-2xl text-earth-moss" />
               <span>DressCode</span>
             </h2>
 
@@ -141,8 +141,8 @@ function App() {
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-slate-900 text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-earth-moss text-earth-card"
+                      : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
                   }`
                 }
               >
@@ -154,8 +154,8 @@ function App() {
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-slate-900 text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-earth-moss text-earth-card"
+                      : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
                   }`
                 }
               >
@@ -167,8 +167,8 @@ function App() {
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-slate-900 text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-earth-moss text-earth-card"
+                      : "text-earth-stone hover:bg-earth-sand/30 hover:text-earth-text"
                   }`
                 }
               >
@@ -186,15 +186,15 @@ function App() {
             path="/closet"
             element={
               <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-                <div className="mb-6 rounded-xl bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                  <h1 className="flex items-center justify-center gap-2 text-center text-3xl font-semibold tracking-tight text-gray-900">
-                    <TbHanger className="text-3xl text-slate-700" />
+                <div className="mb-6 rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                  <h1 className="flex items-center justify-center gap-2 text-center text-3xl font-semibold tracking-tight text-earth-text">
+                    <TbHanger className="text-3xl text-earth-moss" />
                     <span>Your Closet</span>
                   </h1>
 
                   <p
                     className={`mt-3 text-center text-sm font-medium ${
-                      isConnected ? "text-emerald-600" : "text-gray-500"
+                      isConnected ? "text-earth-pine" : "text-earth-stone"
                     }`}
                   >
                     {isConnected

@@ -24,21 +24,21 @@ export default function GettingStarted() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="rounded-xl bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
-        <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+      <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
+        <h1 className="text-center text-3xl font-semibold tracking-tight text-earth-text sm:text-4xl">
           Getting Started with DressCode
         </h1>
-        <h2 className="mt-3 text-center text-lg font-medium text-gray-700">
+        <h2 className="mt-3 text-center text-lg font-medium text-earth-stone">
           Welcome to DressCode - Your Smart Closet Assistant
         </h2>
 
-        <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-7 text-gray-600 sm:text-base">
+        <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-7 text-earth-stone sm:text-base">
           This guide helps you set up and use your wardrobe management system powered by RFID technology. You will learn how to tag items, scan them with the DressCode unit, and view your updated closet in the web app.
         </p>
 
-        <h2 className="mt-8 text-center text-xl font-semibold text-gray-900">How DressCode Works</h2>
+        <h2 className="mt-8 text-center text-xl font-semibold text-earth-text">How DressCode Works</h2>
 
-        <p className="mx-auto mt-3 max-w-3xl text-center text-sm leading-7 text-gray-600 sm:text-base">
+        <p className="mx-auto mt-3 max-w-3xl text-center text-sm leading-7 text-earth-stone sm:text-base">
           DressCode uses RFID tags to automatically track which clothing items are in your closet. Here is a quick overview of the flow.
         </p>
 
@@ -46,11 +46,11 @@ export default function GettingStarted() {
           {steps.map((step) => (
             <div
               key={step.title}
-              className="rounded-xl border border-gray-100 bg-gray-50 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+              className="rounded-xl border border-earth-sand/30 bg-earth-bg p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{step.icon}</p>
-              <h3 className="mt-2 text-lg font-semibold text-gray-900">{step.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-gray-600">{step.body}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-earth-moss">{step.icon}</p>
+              <h3 className="mt-2 text-lg font-semibold text-earth-text">{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-earth-stone">{step.body}</p>
             </div>
           ))}
         </div>

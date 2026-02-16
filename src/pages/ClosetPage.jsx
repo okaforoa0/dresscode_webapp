@@ -17,8 +17,8 @@ export default function ClosetPage({
 }) {
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-        <h2 className="text-xl font-semibold text-gray-900">Clothing Stats</h2>
+      <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <h2 className="text-xl font-semibold text-earth-text">Clothing Stats</h2>
         <div className="mt-4">
           <StatsBar items={items} />
         </div>
@@ -35,7 +35,7 @@ export default function ClosetPage({
       />
 
       {items.length === 0 ? (
-        <div className="rounded-xl bg-white p-6 text-center text-gray-500 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <div className="rounded-xl bg-earth-card p-6 text-center text-earth-stone shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
           No items found.
         </div>
       ) : (
