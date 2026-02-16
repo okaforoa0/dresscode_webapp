@@ -10,18 +10,21 @@ export default function ClosetPage({
   setNewColor,
   newType,
   setNewType,
-  handleAdd, 
+  handleAdd,
   onToggle,
   onRemove,
-  isConnected
+  isConnected,
 }) {
   return (
-    <div className="fade-up">
-      <h2> Clothing Stats</h2>
+    <div className="space-y-6">
+      <div className="rounded-xl bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <h2 className="text-xl font-semibold text-gray-900">Clothing Stats</h2>
+        <div className="mt-4">
+          <StatsBar items={items} />
+        </div>
+      </div>
 
-      <StatsBar items={items} />
-
-      <AddItemForm 
+      <AddItemForm
         newName={newName}
         setNewName={setNewName}
         newColor={newColor}
@@ -32,19 +35,22 @@ export default function ClosetPage({
       />
 
       {items.length === 0 ? (
-        <p>No items found.</p>
+        <div className="rounded-xl bg-white p-6 text-center text-gray-500 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+          No items found.
+        </div>
       ) : (
-        items.map((item) => (
-          <ClosetItem 
-          key={item.id} 
-          item={item}
-          onToggle={onToggle}
-          isConnected={isConnected} 
-          onRemove={onRemove}
-          />
-        ))
+        <div className="grid gap-6 sm:grid-cols-2">
+          {items.map((item) => (
+            <ClosetItem
+              key={item.id}
+              item={item}
+              onToggle={onToggle}
+              isConnected={isConnected}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
-    
