@@ -154,7 +154,7 @@ export default function HomePage() {
       <section className="relative z-10 mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <RevealOnScroll>
           <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
-            <h2 className="text-2xl font-semibold text-earth-text">What DressCode Is</h2>
+            <h2 className="text-2xl font-semibold text-earth-text">What Is DressCode</h2>
             <p className="mt-4 max-w-4xl text-sm leading-7 text-earth-stone sm:text-base">
               DressCode is a smart closet system that helps you keep track of what you
               own, what is currently checked out, and what is available to wear. It turns
