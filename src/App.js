@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ClosetPage from "./pages/ClosetPage";
 import HomePage from "./pages/HomePage";
-import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { TbHanger } from "react-icons/tb";
 import GettingStarted from "./pages/GettingStarted";
@@ -10,6 +10,16 @@ import AuthPage from "./pages/AuthPage";
 
 const API_URL = "http://184.73.245.154:5000";
 const DEV_BYPASS_AUTH = process.env.REACT_APP_DEV_BYPASS_AUTH === "true";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   const [items, setItems] = useState(() => {
@@ -152,6 +162,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="flex min-h-screen flex-col bg-earth-bg text-earth-text">
         <header className="sticky top-0 z-50 border-b border-earth-sand/60 bg-earth-card/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -327,11 +338,16 @@ function App() {
                 Quick Links
               </h4>
               <div className="mt-3 space-y-2 text-sm">
-                <NavLink to="/" className="block text-earth-stone transition-colors hover:text-earth-text">
+                <NavLink
+                  to="/"
+                  reloadDocument
+                  className="block text-earth-stone transition-colors hover:text-earth-text"
+                >
                   Home
                 </NavLink>
                 <NavLink
                   to="/onboarding"
+                  reloadDocument
                   className="block text-earth-stone transition-colors hover:text-earth-text"
                 >
                   Getting Started
@@ -340,12 +356,14 @@ function App() {
                   <>
                     <NavLink
                       to="/closet"
+                      reloadDocument
                       className="block text-earth-stone transition-colors hover:text-earth-text"
                     >
                       Closet
                     </NavLink>
                     <NavLink
                       to="/outfits"
+                      reloadDocument
                       className="block text-earth-stone transition-colors hover:text-earth-text"
                     >
                       Outfit Suggestions
@@ -354,6 +372,7 @@ function App() {
                 ) : (
                   <NavLink
                     to="/auth"
+                    reloadDocument
                     className="block text-earth-stone transition-colors hover:text-earth-text"
                   >
                     Login / Sign Up
