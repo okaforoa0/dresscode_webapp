@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
-const API_URL = "http://184.73.245.154:5000";
+const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
 
 const AUTH_ENDPOINTS = {
-  login: ["/login", "/auth/login", "/users/login"],
-  register: ["/register", "/auth/register", "/users/register"],
+  login: [
+    process.env.REACT_APP_AUTH_LOGIN_ENDPOINT,
+    "/login",
+    "/auth/login",
+    "/users/login",
+  ].filter(Boolean),
+  register: [
+    process.env.REACT_APP_AUTH_REGISTER_ENDPOINT,
+    "/register",
+    "/auth/register",
+    "/users/register",
+  ].filter(Boolean),
 };
 
 function normalizeAuthPayload(data, fallbackEmail, fallbackName) {
@@ -130,8 +140,9 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
     }
 
     if (!completed) {
+      const tried = (isLogin ? AUTH_ENDPOINTS.login : AUTH_ENDPOINTS.register).join(", ");
       setError(
-        "Could not reach any auth endpoint. Check backend routes for login/register and update AuthPage endpoints."
+        `Could not reach any auth endpoint. Tried: ${tried}`
       );
     }
 

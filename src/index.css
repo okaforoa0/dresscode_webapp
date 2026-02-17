@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    @apply overflow-x-hidden;
+  }
+
   body {
     @apply m-0 bg-earth-bg text-earth-text antialiased;
     font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;

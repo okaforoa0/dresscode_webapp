@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ClosetPage from "./pages/ClosetPage";
 import HomePage from "./pages/HomePage";
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -38,6 +38,25 @@ function App() {
 
   const isAuthenticated = Boolean(auth?.user?.email || auth?.user?.id);
   const canAccessProtected = isAuthenticated || DEV_BYPASS_AUTH;
+  const currentUserId = auth?.user?.id != null ? String(auth.user.id) : "";
+
+  const filterItemsForCurrentUser = useCallback(
+    (list) => {
+      if (!Array.isArray(list)) return [];
+
+      if (!isAuthenticated || !currentUserId) {
+        return list;
+      }
+
+      return list.filter((item) => {
+        const ownerId = item?.user_id ?? item?.User_ID;
+        return ownerId != null && String(ownerId) === currentUserId;
+      });
+    },
+    [currentUserId, isAuthenticated]
+  );
+
+  const visibleItems = filterItemsForCurrentUser(items);
 
   function handleAuthSuccess(payload) {
     setAuth(payload);
@@ -60,10 +79,10 @@ function App() {
         return res.json();
       })
       .then((data) => {
-        if (data && Array.isArray(data)) setItems(data);
+        if (data && Array.isArray(data)) setItems(filterItemsForCurrentUser(data));
       })
       .catch(() => console.log("Backend not available - using local data"));
-  }, [canAccessProtected]);
+  }, [canAccessProtected, filterItemsForCurrentUser]);
 
   useEffect(() => {
     if (!canAccessProtected) return;
@@ -81,7 +100,7 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            setItems(data);
+            setItems(filterItemsForCurrentUser(data));
           }
         })
         .catch((err) => {
@@ -90,7 +109,7 @@ function App() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isConnected, canAccessProtected]);
+  }, [isConnected, canAccessProtected, filterItemsForCurrentUser]);
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -98,6 +117,7 @@ function App() {
 
     const newItem = {
       id: Date.now(),
+      user_id: auth?.user?.id || null,
       item_name: newName,
       color: newColor || "-",
       type: newType || "-",
@@ -165,13 +185,13 @@ function App() {
       <ScrollToTop />
       <div className="flex min-h-screen flex-col bg-earth-bg text-earth-text">
         <header className="sticky top-0 z-50 border-b border-earth-sand/60 bg-earth-card/95 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <h2 className="group flex items-center gap-2 text-xl font-semibold tracking-tight text-earth-text">
               <TbHanger className="origin-top text-2xl text-earth-moss motion-safe:animate-hanger-intro motion-safe:group-hover:animate-hanger-swing" />
               <span>DressCode</span>
             </h2>
 
-            <nav className="flex items-center gap-2 sm:gap-3">
+            <nav className="flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 sm:w-auto sm:gap-3 sm:overflow-visible sm:pb-0">
               <NavLink
                 to="/"
                 reloadDocument
@@ -296,7 +316,7 @@ function App() {
                     </div>
 
                     <ClosetPage
-                      items={items}
+                      items={visibleItems}
                       newName={newName}
                       setNewName={setNewName}
                       newColor={newColor}
@@ -318,7 +338,11 @@ function App() {
             <Route
               path="/outfits"
               element={
-                canAccessProtected ? <OutfitSuggestions items={items} /> : <Navigate to="/auth" replace />
+                canAccessProtected ? (
+                  <OutfitSuggestions items={visibleItems} />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
               }
             />
           </Routes>
