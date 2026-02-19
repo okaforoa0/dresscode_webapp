@@ -11,6 +11,7 @@ import AuthPage from "./pages/AuthPage";
 const API_URL = "http://184.73.245.154:5000";
 const DEV_BYPASS_AUTH = process.env.REACT_APP_DEV_BYPASS_AUTH === "true";
 
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
