@@ -58,6 +58,7 @@ export default function HomePage() {
   const isTypingComplete = typedTitle.length === HERO_TITLE.length;
 
   return (
+    // this takes care of the background gradient
     <div className="relative overflow-hidden bg-gradient-to-br from-[#f6f1e9] via-earth-bg to-[#e9e2d6]">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-0 h-96 w-96 bg-earth-sage/30 blur-3xl motion-safe:animate-lava-one" />
