@@ -10,6 +10,9 @@ const COLOR_OPTIONS = [
   "Beige",
   "Red",
   "Navy",
+  "Purple",
+  "Pink",
+  "Yellow",
 ];
 
 const TYPE_OPTIONS = [
