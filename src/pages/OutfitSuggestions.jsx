@@ -251,6 +251,10 @@ function SuggestionPiece({ label, item }) {
 export default function OutfitSuggestions({ items }) {
   const [weather, setWeather] = useState(null);
   const [weatherError, setWeatherError] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragStartX, setDragStartX] = useState(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState(0);
 
   useEffect(() => {
     const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
@@ -275,6 +279,86 @@ export default function OutfitSuggestions({ items }) {
       });
   }, []);
 
+  const availableItems = items.filter((item) => !item.is_checked_out);
+  const inventory = buildInventory(availableItems);
+  const temp = weather?.current?.temp_f ?? 70;
+  const conditionText = weather?.current?.condition?.text;
+  const outfits = generateOutfits(inventory, temp, conditionText);
+  const hasCoreItems =
+    (inventory.tops.length > 0 && inventory.bottoms.length > 0) ||
+    inventory.onePiece.length > 0 ||
+    availableItems.length >= 2;
+
+  useEffect(() => {
+    if (outfits.length === 0) {
+      setActiveIndex(0);
+      return;
+    }
+
+    if (activeIndex > outfits.length - 1) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, outfits.length]);
+
+  function beginDrag(clientX, target) {
+    if (target?.closest("button")) return;
+    setDragStartX(clientX);
+    setSwipeDirection(0);
+  }
+
+  function updateDrag(clientX) {
+    if (dragStartX == null) return;
+    setDragOffset(clientX - dragStartX);
+  }
+
+  function endDrag() {
+    if (dragStartX == null) return;
+
+    if (Math.abs(dragOffset) > 90) {
+      const direction = dragOffset > 0 ? 1 : -1;
+      setSwipeDirection(direction);
+      setDragOffset(direction * 420);
+
+      window.setTimeout(() => {
+        setActiveIndex((prev) => (prev + 1) % outfits.length);
+        setDragOffset(0);
+        setSwipeDirection(0);
+      }, 220);
+    } else {
+      setDragOffset(0);
+    }
+
+    setDragStartX(null);
+  }
+
+  const mobileCards = outfits.slice(activeIndex, activeIndex + 3);
+  if (mobileCards.length < 3 && outfits.length > 0) {
+    mobileCards.push(...outfits.slice(0, 3 - mobileCards.length));
+  }
+
+  function renderOutfitCard(outfit) {
+    const isOnePieceLook = inventory.onePiece.some(
+      (item) => String(item.id) === String(outfit.top?.id)
+    );
+
+    return (
+      <div className="rounded-[1.5rem] border border-earth-sand/40 bg-earth-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-earth-moss">
+          Suggested Look
+        </p>
+        <h3 className="mt-2 text-xl font-semibold text-earth-text">{outfit.title}</h3>
+        <p className="mt-3 text-sm leading-6 text-earth-stone">{outfit.reason}</p>
+
+        <div className="mt-5 grid gap-3">
+          <SuggestionPiece label={isOnePieceLook ? "Main Piece" : "Top"} item={outfit.top} />
+          {outfit.bottom && <SuggestionPiece label="Bottom" item={outfit.bottom} />}
+          {outfit.outerwear && <SuggestionPiece label="Layer" item={outfit.outerwear} />}
+          {outfit.shoes && <SuggestionPiece label="Shoes" item={outfit.shoes} />}
+        </div>
+      </div>
+    );
+  }
+
   if (weatherError) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -294,16 +378,6 @@ export default function OutfitSuggestions({ items }) {
       </div>
     );
   }
-
-  const availableItems = items.filter((item) => !item.is_checked_out);
-  const inventory = buildInventory(availableItems);
-  const temp = weather?.current?.temp_f;
-  const conditionText = weather?.current?.condition?.text;
-  const outfits = generateOutfits(inventory, temp, conditionText);
-  const hasCoreItems =
-    (inventory.tops.length > 0 && inventory.bottoms.length > 0) ||
-    inventory.onePiece.length > 0 ||
-    availableItems.length >= 2;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -332,34 +406,77 @@ export default function OutfitSuggestions({ items }) {
             outfit for this weather yet. Try adding more tops, bottoms, dresses, or outerwear.
           </div>
         ) : (
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            {outfits.map((outfit) => {
-              const isOnePieceLook = inventory.onePiece.some(
-                (item) => String(item.id) === String(outfit.top?.id)
-              );
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between rounded-xl bg-earth-bg p-4 shadow-sm">
+              <div>
+                <h3 className="text-lg font-semibold text-earth-text">Outfit Cards</h3>
+                <p className="text-sm text-earth-stone">
+                  On mobile, swipe outfit ideas like a card deck. On desktop, compare all looks at once.
+                </p>
+              </div>
+              <p className="hidden rounded-full bg-earth-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-earth-moss sm:block">
+                Card view
+              </p>
+            </div>
 
-              return (
-                <div
-                  key={outfit.title}
-                  className="rounded-[1.5rem] border border-earth-sand/40 bg-earth-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-earth-moss">
-                    Suggested Look
-                  </p>
-                  <h3 className="mt-2 text-xl font-semibold text-earth-text">{outfit.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-earth-stone">{outfit.reason}</p>
+            <div className="sm:hidden">
+              <div className="relative mx-auto h-[31rem] w-full max-w-sm">
+                {mobileCards.map((outfit, index) => {
+                  const isTopCard = index === 0;
+                  const baseTranslateY = index * 12;
+                  const scale = 1 - index * 0.04;
+                  const topCardTransform = isTopCard
+                    ? `translateX(${dragOffset}px) translateY(${baseTranslateY}px) rotate(${dragOffset / 18}deg) scale(${scale})`
+                    : `translateX(0px) translateY(${baseTranslateY}px) rotate(0deg) scale(${scale})`;
 
-                  <div className="mt-5 grid gap-3">
-                    <SuggestionPiece label={isOnePieceLook ? "Main Piece" : "Top"} item={outfit.top} />
-                    {outfit.bottom && <SuggestionPiece label="Bottom" item={outfit.bottom} />}
-                    {outfit.outerwear && (
-                      <SuggestionPiece label="Layer" item={outfit.outerwear} />
-                    )}
-                    {outfit.shoes && <SuggestionPiece label="Shoes" item={outfit.shoes} />}
-                  </div>
-                </div>
-              );
-            })}
+                  return (
+                    <div
+                      key={`${outfit.title}-${index}`}
+                      className={`absolute inset-0 transition-all duration-200 ${
+                        isTopCard && swipeDirection !== 0 ? "duration-200" : ""
+                      }`}
+                      style={{
+                        transform: topCardTransform,
+                        zIndex: 30 - index,
+                        opacity: index === 2 ? 0.72 : 1,
+                      }}
+                      onTouchStart={(event) =>
+                        isTopCard && beginDrag(event.touches[0].clientX, event.target)
+                      }
+                      onTouchMove={(event) =>
+                        isTopCard && updateDrag(event.touches[0].clientX)
+                      }
+                      onTouchEnd={() => isTopCard && endDrag()}
+                      onMouseDown={(event) =>
+                        isTopCard && beginDrag(event.clientX, event.target)
+                      }
+                      onMouseMove={(event) =>
+                        isTopCard && dragStartX != null && updateDrag(event.clientX)
+                      }
+                      onMouseUp={() => isTopCard && endDrag()}
+                      onMouseLeave={() =>
+                        isTopCard && dragStartX != null && endDrag()
+                      }
+                    >
+                      {renderOutfitCard(outfit)}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-earth-bg px-4 py-3 text-sm text-earth-stone shadow-sm">
+                <p>Swipe to move through outfit ideas</p>
+                <p className="font-semibold text-earth-moss">
+                  {activeIndex + 1} / {outfits.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden gap-6 sm:grid lg:grid-cols-3">
+              {outfits.map((outfit) => (
+                <div key={outfit.title}>{renderOutfitCard(outfit)}</div>
+              ))}
+            </div>
           </div>
         )}
       </div>

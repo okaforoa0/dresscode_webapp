@@ -13,10 +13,12 @@ const COLOR_OPTIONS = [
   "Purple",
   "Pink",
   "Yellow",
+  "Grey",
 ];
 
 const TYPE_OPTIONS = [
   "T-Shirt",
+  "Shirt",
   "Hoodie",
   "Sweater",
   "Jacket",
@@ -26,6 +28,9 @@ const TYPE_OPTIONS = [
   "Dress",
   "Skirt",
   "Shoes",
+  "Sneakers",
+  "Tank Top",
+  "Crop Top",
 ];
 
 function inferDetailsFromName(value) {
