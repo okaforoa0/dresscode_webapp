@@ -235,7 +235,7 @@ function generateOutfits(inventory, temp, conditionText) {
 
 function SuggestionPiece({ label, item }) {
   return (
-    <div className="rounded-xl bg-earth-bg p-4">
+    <div className="min-h-[5.75rem] rounded-xl bg-earth-bg p-4">
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-earth-stone">
         {label}
       </p>
@@ -251,10 +251,6 @@ function SuggestionPiece({ label, item }) {
 export default function OutfitSuggestions({ items }) {
   const [weather, setWeather] = useState(null);
   const [weatherError, setWeatherError] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [dragStartX, setDragStartX] = useState(null);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState(0);
 
   useEffect(() => {
     const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
@@ -289,53 +285,6 @@ export default function OutfitSuggestions({ items }) {
     inventory.onePiece.length > 0 ||
     availableItems.length >= 2;
 
-  useEffect(() => {
-    if (outfits.length === 0) {
-      setActiveIndex(0);
-      return;
-    }
-
-    if (activeIndex > outfits.length - 1) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, outfits.length]);
-
-  function beginDrag(clientX, target) {
-    if (target?.closest("button")) return;
-    setDragStartX(clientX);
-    setSwipeDirection(0);
-  }
-
-  function updateDrag(clientX) {
-    if (dragStartX == null) return;
-    setDragOffset(clientX - dragStartX);
-  }
-
-  function endDrag() {
-    if (dragStartX == null) return;
-
-    if (Math.abs(dragOffset) > 90) {
-      const direction = dragOffset > 0 ? 1 : -1;
-      setSwipeDirection(direction);
-      setDragOffset(direction * 420);
-
-      window.setTimeout(() => {
-        setActiveIndex((prev) => (prev + 1) % outfits.length);
-        setDragOffset(0);
-        setSwipeDirection(0);
-      }, 220);
-    } else {
-      setDragOffset(0);
-    }
-
-    setDragStartX(null);
-  }
-
-  const mobileCards = outfits.slice(activeIndex, activeIndex + 3);
-  if (mobileCards.length < 3 && outfits.length > 0) {
-    mobileCards.push(...outfits.slice(0, 3 - mobileCards.length));
-  }
-
   function renderOutfitCard(outfit) {
     const isOnePieceLook = inventory.onePiece.some(
       (item) => String(item.id) === String(outfit.top?.id)
@@ -347,7 +296,7 @@ export default function OutfitSuggestions({ items }) {
           Suggested Look
         </p>
         <h3 className="mt-2 text-xl font-semibold text-earth-text">{outfit.title}</h3>
-        <p className="mt-3 text-sm leading-6 text-earth-stone">{outfit.reason}</p>
+        <p className="mt-3 min-h-[4.5rem] text-sm leading-6 text-earth-stone">{outfit.reason}</p>
 
         <div className="mt-5 grid gap-3">
           <SuggestionPiece label={isOnePieceLook ? "Main Piece" : "Top"} item={outfit.top} />
@@ -411,7 +360,7 @@ export default function OutfitSuggestions({ items }) {
               <div>
                 <h3 className="text-lg font-semibold text-earth-text">Outfit Cards</h3>
                 <p className="text-sm text-earth-stone">
-                  On mobile, swipe outfit ideas like a card deck. On desktop, compare all looks at once.
+                  On mobile, scroll sideways through outfit ideas. On desktop, compare all looks at once.
                 </p>
               </div>
               <p className="hidden rounded-full bg-earth-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-earth-moss sm:block">
@@ -420,55 +369,25 @@ export default function OutfitSuggestions({ items }) {
             </div>
 
             <div className="sm:hidden">
-              <div className="relative mx-auto h-[31rem] w-full max-w-sm">
-                {mobileCards.map((outfit, index) => {
-                  const isTopCard = index === 0;
-                  const baseTranslateY = index * 12;
-                  const scale = 1 - index * 0.04;
-                  const topCardTransform = isTopCard
-                    ? `translateX(${dragOffset}px) translateY(${baseTranslateY}px) rotate(${dragOffset / 18}deg) scale(${scale})`
-                    : `translateX(0px) translateY(${baseTranslateY}px) rotate(0deg) scale(${scale})`;
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-earth-bg to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-earth-bg to-transparent" />
 
-                  return (
+                <div className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-2 scrollbar-earth">
+                  {outfits.map((outfit) => (
                     <div
-                      key={`${outfit.title}-${index}`}
-                      className={`absolute inset-0 transition-all duration-200 ${
-                        isTopCard && swipeDirection !== 0 ? "duration-200" : ""
-                      }`}
-                      style={{
-                        transform: topCardTransform,
-                        zIndex: 30 - index,
-                        opacity: index === 2 ? 0.72 : 1,
-                      }}
-                      onTouchStart={(event) =>
-                        isTopCard && beginDrag(event.touches[0].clientX, event.target)
-                      }
-                      onTouchMove={(event) =>
-                        isTopCard && updateDrag(event.touches[0].clientX)
-                      }
-                      onTouchEnd={() => isTopCard && endDrag()}
-                      onMouseDown={(event) =>
-                        isTopCard && beginDrag(event.clientX, event.target)
-                      }
-                      onMouseMove={(event) =>
-                        isTopCard && dragStartX != null && updateDrag(event.clientX)
-                      }
-                      onMouseUp={() => isTopCard && endDrag()}
-                      onMouseLeave={() =>
-                        isTopCard && dragStartX != null && endDrag()
-                      }
+                      key={outfit.title}
+                      className="w-[88vw] max-w-sm flex-none snap-center"
                     >
                       {renderOutfitCard(outfit)}
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between rounded-xl bg-earth-bg px-4 py-3 text-sm text-earth-stone shadow-sm">
-                <p>Swipe to move through outfit ideas</p>
-                <p className="font-semibold text-earth-moss">
-                  {activeIndex + 1} / {outfits.length}
-                </p>
+                <p>Scroll to browse outfit ideas</p>
+                <p className="font-semibold text-earth-moss">{outfits.length} looks</p>
               </div>
             </div>
 

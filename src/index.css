@@ -14,3 +14,29 @@
     font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   }
 }
+
+@layer utilities {
+  .scrollbar-earth {
+    scrollbar-width: thin;
+    scrollbar-color: #9aaa8a #f3efe8;
+  }
+
+  .scrollbar-earth::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .scrollbar-earth::-webkit-scrollbar-track {
+    background: #f3efe8;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-earth::-webkit-scrollbar-thumb {
+    background: #9aaa8a;
+    border-radius: 9999px;
+    border: 2px solid #f3efe8;
+  }
+
+  .scrollbar-earth::-webkit-scrollbar-thumb:hover {
+    background: #6f7f68;
+  }
+}
