@@ -14,6 +14,15 @@ export default function ClosetPage({
   onToggle,
   onRemove,
   isConnected,
+  devices,
+  selectedDeviceId,
+  setSelectedDeviceId,
+  deviceMessage,
+  deviceError,
+  isRegistrationMode,
+  pendingRfidTag,
+  onRegisterDevice,
+  onToggleRegistrationMode,
 }) {
   return (
     <div className="space-y-6">
@@ -24,6 +33,86 @@ export default function ClosetPage({
         </div>
       </div>
 
+      <div className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-earth-text">RFID Device</h2>
+            <p className="mt-1 text-sm leading-6 text-earth-stone">
+              Connect your DressCode reader, then start registration mode before scanning a new item.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {devices.length > 0 && (
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                className="rounded-lg border border-earth-sand/40 bg-earth-card px-3 py-2 text-sm text-earth-text outline-none transition-all duration-200 focus:border-earth-moss focus:ring-2 focus:ring-earth-sand/50"
+              >
+                {devices.map((deviceId) => (
+                  <option key={deviceId} value={deviceId}>
+                    {deviceId}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <button
+              type="button"
+              onClick={onRegisterDevice}
+              className="rounded-lg border border-earth-sand px-4 py-2 text-sm font-semibold text-earth-moss transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sand/30 hover:shadow-md"
+            >
+              Register Device
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleRegistrationMode}
+              disabled={devices.length === 0}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
+                isRegistrationMode
+                  ? "bg-[#8b4e3d] text-earth-card hover:bg-[#754131]"
+                  : "bg-earth-moss text-earth-card hover:bg-earth-sage"
+              }`}
+            >
+              {isRegistrationMode ? "Stop Registration" : "Start Registration"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <div className="rounded-xl bg-earth-bg p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-earth-stone">
+              Registration Status
+            </p>
+            <p className="mt-1 font-medium text-earth-text">
+              {isRegistrationMode ? "Waiting for RFID scan..." : "Registration mode off"}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-earth-bg p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-earth-stone">
+              Pending RFID
+            </p>
+            <p className="mt-1 font-medium text-earth-text">
+              {pendingRfidTag || "No scan captured yet"}
+            </p>
+          </div>
+        </div>
+
+        {deviceMessage && (
+          <p className="mt-4 rounded-lg bg-[#e8f1ea] px-3 py-2 text-sm text-[#3f6b4b]">
+            {deviceMessage}
+          </p>
+        )}
+
+        {deviceError && (
+          <p className="mt-4 rounded-lg bg-[#f7ebe7] px-3 py-2 text-sm text-[#8b4e3d]">
+            {deviceError}
+          </p>
+        )}
+      </div>
+
       <AddItemForm
         newName={newName}
         setNewName={setNewName}
@@ -32,6 +121,9 @@ export default function ClosetPage({
         newType={newType}
         setNewType={setNewType}
         handleAdd={handleAdd}
+        pendingRfidTag={pendingRfidTag}
+        isRegistrationMode={isRegistrationMode}
+        requiresRfid={isConnected}
       />
 
       {items.length === 0 ? (

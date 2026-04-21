@@ -8,7 +8,7 @@ import GettingStarted from "./pages/GettingStarted";
 import OutfitSuggestions from "./pages/OutfitSuggestions";
 import AuthPage from "./pages/AuthPage";
 
-const API_URL = "http://184.73.245.154:5000";
+const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
 const DEV_BYPASS_AUTH = process.env.REACT_APP_DEV_BYPASS_AUTH === "true";
 
 
@@ -32,6 +32,12 @@ function App() {
   const [newColor, setNewColor] = useState("");
   const [newType, setNewType] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [deviceMessage, setDeviceMessage] = useState("");
+  const [deviceError, setDeviceError] = useState("");
+  const [isRegistrationMode, setIsRegistrationMode] = useState(false);
+  const [pendingRfidTag, setPendingRfidTag] = useState("");
   const [auth, setAuth] = useState(() => {
     const saved = localStorage.getItem("dresscodeAuth");
     return saved ? JSON.parse(saved) : null;
@@ -40,6 +46,15 @@ function App() {
   const isAuthenticated = Boolean(auth?.user?.email || auth?.user?.id);
   const canAccessProtected = isAuthenticated || DEV_BYPASS_AUTH;
   const currentUserId = auth?.user?.id != null ? String(auth.user.id) : "";
+  const authToken = auth?.token || "";
+
+  const authHeaders = useCallback(
+    (extraHeaders = {}) => ({
+      ...extraHeaders,
+      ...(authToken ? { Authorization: authToken } : {}),
+    }),
+    [authToken]
+  );
 
   const filterItemsForCurrentUser = useCallback(
     (list) => {
@@ -51,7 +66,7 @@ function App() {
 
       return list.filter((item) => {
         const ownerId = item?.user_id ?? item?.User_ID;
-        return ownerId != null && String(ownerId) === currentUserId;
+        return ownerId == null || String(ownerId) === currentUserId;
       });
     },
     [currentUserId, isAuthenticated]
@@ -68,13 +83,21 @@ function App() {
     setAuth(null);
     setItems([]);
     setIsConnected(false);
+    setDevices([]);
+    setSelectedDeviceId("");
+    setDeviceMessage("");
+    setDeviceError("");
+    setIsRegistrationMode(false);
+    setPendingRfidTag("");
     localStorage.removeItem("dresscodeAuth");
   }
 
   useEffect(() => {
     if (!canAccessProtected) return;
 
-    fetch(`${API_URL}/items`)
+    fetch(`${API_URL}/items`, {
+      headers: authHeaders(),
+    })
       .then((res) => {
         if (res.ok) setIsConnected(true);
         return res.json();
@@ -83,7 +106,31 @@ function App() {
         if (data && Array.isArray(data)) setItems(filterItemsForCurrentUser(data));
       })
       .catch(() => console.log("Backend not available - using local data"));
-  }, [canAccessProtected, filterItemsForCurrentUser]);
+  }, [authHeaders, canAccessProtected, filterItemsForCurrentUser]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    fetch(`${API_URL}/devices`, {
+      headers: authHeaders(),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const nextDevices = Array.isArray(data?.devices) ? data.devices : [];
+        setDevices(nextDevices);
+        setSelectedDeviceId((current) => current || nextDevices[0] || "");
+
+        if (nextDevices.length === 0) {
+          setDeviceMessage("No device registered yet. Register a device before scanning items.");
+        } else {
+          setDeviceMessage("");
+        }
+      })
+      .catch((err) => {
+        console.log("Device fetch failed:", err);
+        setDeviceError("Unable to load devices right now.");
+      });
+  }, [authHeaders, isAuthenticated]);
 
   useEffect(() => {
     if (!canAccessProtected) return;
@@ -97,7 +144,9 @@ function App() {
     if (!isConnected || !canAccessProtected) return;
 
     const interval = setInterval(() => {
-      fetch(`${API_URL}/items`)
+      fetch(`${API_URL}/items`, {
+        headers: authHeaders(),
+      })
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
@@ -110,11 +159,177 @@ function App() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isConnected, canAccessProtected, filterItemsForCurrentUser]);
+  }, [authHeaders, isConnected, canAccessProtected, filterItemsForCurrentUser]);
+
+  useEffect(() => {
+    if (!isRegistrationMode || !selectedDeviceId || !isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      fetch(`${API_URL}/pending-scan/${selectedDeviceId}`, {
+        headers: authHeaders(),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.rfid_tag) {
+            setPendingRfidTag(data.rfid_tag);
+            setIsRegistrationMode(false);
+            setDeviceMessage("RFID scan received. Add the item details below.");
+
+            fetch(`${API_URL}/stop-registration`, {
+              method: "POST",
+              headers: authHeaders({ "Content-Type": "application/json" }),
+              body: JSON.stringify({ device_id: selectedDeviceId }),
+            }).catch(() => {});
+          }
+        })
+        .catch((err) => {
+          console.log("Pending scan polling failed:", err);
+        });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [authHeaders, isAuthenticated, isRegistrationMode, selectedDeviceId]);
+
+  useEffect(() => {
+    if (!isRegistrationMode) return;
+
+    const timeout = window.setTimeout(() => {
+      setIsRegistrationMode(false);
+      setDeviceMessage("Registration mode timed out. Start it again when you are ready to scan.");
+
+      if (selectedDeviceId && isAuthenticated) {
+        fetch(`${API_URL}/stop-registration`, {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ device_id: selectedDeviceId }),
+        }).catch(() => {});
+      }
+    }, 60000);
+
+    return () => window.clearTimeout(timeout);
+  }, [authHeaders, isAuthenticated, isRegistrationMode, selectedDeviceId]);
+
+  async function refreshItems() {
+    if (!isAuthenticated) return;
+
+    try {
+      const response = await fetch(`${API_URL}/items`, {
+        headers: authHeaders(),
+      });
+      const data = await response.json();
+
+      if (response.ok && Array.isArray(data)) {
+        setIsConnected(true);
+        setItems(filterItemsForCurrentUser(data));
+      }
+    } catch (err) {
+      console.log("Item refresh failed:", err);
+    }
+  }
+
+  async function refreshDevices() {
+    if (!isAuthenticated) return;
+
+    try {
+      const response = await fetch(`${API_URL}/devices`, {
+        headers: authHeaders(),
+      });
+      const data = await response.json();
+      const nextDevices = Array.isArray(data?.devices) ? data.devices : [];
+
+      setDevices(nextDevices);
+      setSelectedDeviceId((current) => current || nextDevices[0] || "");
+      setDeviceMessage(
+        nextDevices.length === 0
+          ? "No device registered yet. Register a device before scanning items."
+          : ""
+      );
+    } catch (err) {
+      console.log("Device refresh failed:", err);
+      setDeviceError("Unable to refresh devices right now.");
+    }
+  }
+
+  async function handleRegisterDevice() {
+    setDeviceError("");
+    setDeviceMessage("");
+
+    const deviceId = window.prompt(
+      "Tap the pairing card, then enter the device ID shown on the LCD."
+    );
+
+    if (!deviceId?.trim()) return;
+
+    try {
+      const response = await fetch(`${API_URL}/register-device`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ device_id: deviceId.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setDeviceError(data?.error || "Unable to register device.");
+        return;
+      }
+
+      setSelectedDeviceId(data?.device_id || deviceId.trim());
+      setDeviceMessage(
+        data?.status === "already_owned"
+          ? "This device is already connected to your account."
+          : "Device registered successfully."
+      );
+      await refreshDevices();
+    } catch (err) {
+      console.log("Device registration failed:", err);
+      setDeviceError("Unable to register device right now.");
+    }
+  }
+
+  async function handleToggleRegistrationMode() {
+    setDeviceError("");
+    setDeviceMessage("");
+
+    if (!selectedDeviceId) {
+      setDeviceError("Register or select a device before starting item registration.");
+      return;
+    }
+
+    const nextIsActive = !isRegistrationMode;
+    const endpoint = nextIsActive ? "/start-registration" : "/stop-registration";
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ device_id: selectedDeviceId }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setDeviceError(data?.error || "Unable to update registration mode.");
+        return;
+      }
+
+      setIsRegistrationMode(nextIsActive);
+      setDeviceMessage(
+        nextIsActive
+          ? "Registration mode is on. Scan an RFID tag to attach it to an item."
+          : "Registration mode is off."
+      );
+    } catch (err) {
+      console.log("Registration mode toggle failed:", err);
+      setDeviceError("Unable to update registration mode right now.");
+    }
+  }
 
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName.trim()) return;
+    if (isAuthenticated && isConnected && !pendingRfidTag) {
+      setDeviceError("Scan an RFID tag before adding this item.");
+      return;
+    }
 
     const newItem = {
       id: Date.now(),
@@ -123,34 +338,44 @@ function App() {
       color: newColor || "-",
       type: newType || "-",
       is_checked_out: 0,
+      rfid_tag: pendingRfidTag || `${Date.now()}`,
     };
 
-    setItems([newItem, ...items]);
-    setNewName("");
-    setNewColor("");
-    setNewType("");
-
-    if (isConnected) {
+    if (isAuthenticated && isConnected) {
       try {
-        await fetch(`${API_URL}/add-item`, {
+        const response = await fetch(`${API_URL}/add-item`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({
-            user_id: auth?.user?.id || "",
-            rfid_tag: `${newItem.id}`,
+            rfid_tag: pendingRfidTag,
             item_name: newName,
             color: newColor || "-",
             type: newType || "-",
             description: "",
             image_url: "",
-            is_checked_out: 0,
-            last_updated: new Date().toISOString(),
           }),
         });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          setDeviceError(data?.error || "Unable to add item.");
+          return;
+        }
+
+        setDeviceMessage("Item added successfully.");
+        setPendingRfidTag("");
+        await refreshItems();
       } catch (err) {
-        console.warn("Couldn't reach backend - data saved locally.");
+        console.warn("Couldn't reach backend, item saved locally.", err);
+        setItems([newItem, ...items]);
       }
+    } else {
+      setItems([newItem, ...items]);
     }
+
+    setNewName("");
+    setNewColor("");
+    setNewType("");
   }
 
   async function handleToggle(id) {
@@ -177,8 +402,30 @@ function App() {
     }
   }
 
-  function handleRemove(id) {
+  async function handleRemove(id) {
     setItems(items.filter((item) => item.id !== id));
+
+    if (!isAuthenticated || !isConnected) return;
+
+    try {
+      const response = await fetch(`${API_URL}/delete-item/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setDeviceError(data?.error || "Unable to delete item.");
+        await refreshItems();
+        return;
+      }
+
+      setDeviceMessage("Item deleted successfully.");
+    } catch (err) {
+      console.log("Delete item failed:", err);
+      setDeviceError("Unable to delete item right now.");
+      await refreshItems();
+    }
   }
 
   return (
@@ -328,6 +575,15 @@ function App() {
                       onToggle={handleToggle}
                       onRemove={handleRemove}
                       isConnected={isConnected}
+                      devices={devices}
+                      selectedDeviceId={selectedDeviceId}
+                      setSelectedDeviceId={setSelectedDeviceId}
+                      deviceMessage={deviceMessage}
+                      deviceError={deviceError}
+                      isRegistrationMode={isRegistrationMode}
+                      pendingRfidTag={pendingRfidTag}
+                      onRegisterDevice={handleRegisterDevice}
+                      onToggleRegistrationMode={handleToggleRegistrationMode}
                     />
                   </div>
                 ) : (

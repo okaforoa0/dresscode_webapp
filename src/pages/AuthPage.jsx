@@ -140,9 +140,10 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
     }
 
     if (!completed) {
-      const tried = (isLogin ? AUTH_ENDPOINTS.login : AUTH_ENDPOINTS.register).join(", ");
+      //const tried = (isLogin ? AUTH_ENDPOINTS.login : AUTH_ENDPOINTS.register).join(", ");
       setError(
-        `Could not reach any auth endpoint. Tried: ${tried}`
+        //`Could not reach any auth endpoint. Tried: ${tried}`
+        `Could not log in or register. Please try again later. If the issue persists, contact support.`
       );
     }
 

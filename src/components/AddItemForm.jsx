@@ -58,9 +58,13 @@ export default function AddItemForm({
   newType,
   setNewType,
   handleAdd,
+  pendingRfidTag = "",
+  isRegistrationMode = false,
+  requiresRfid = false,
 }) {
   const lastAutoColorRef = useRef("");
   const lastAutoTypeRef = useRef("");
+  const isAddDisabled = requiresRfid && !pendingRfidTag;
 
   function handleNameChange(value) {
     setNewName(value);
@@ -91,6 +95,21 @@ export default function AddItemForm({
       onSubmit={handleAdd}
       className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
     >
+      <div className="mb-4 rounded-xl bg-earth-bg p-4 text-sm text-earth-stone">
+        {pendingRfidTag ? (
+          <span>
+            RFID captured: <strong className="text-earth-text">{pendingRfidTag}</strong>. Add the
+            item details below.
+          </span>
+        ) : isRegistrationMode ? (
+          "Waiting for an RFID scan. Once the tag is captured, you can save the item details here."
+        ) : requiresRfid ? (
+          "Start registration mode and scan an RFID tag before adding a new item."
+        ) : (
+          "Add a clothing item manually while you are developing or offline."
+        )}
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <input
           value={newName}
@@ -127,9 +146,10 @@ export default function AddItemForm({
 
         <button
           type="submit"
-          className="rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md"
+          disabled={isAddDisabled}
+          className="rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Add Item
+          {isAddDisabled ? "Scan RFID First" : "Add Item"}
         </button>
       </div>
     </form>
