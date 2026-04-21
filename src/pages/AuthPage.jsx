@@ -16,6 +16,11 @@ const AUTH_ENDPOINTS = {
     "/auth/register",
     "/users/register",
   ].filter(Boolean),
+  recovery: [
+    process.env.REACT_APP_AUTH_RECOVERY_ENDPOINT,
+    "/forgot-password",
+    "/reset-password",
+  ].filter(Boolean),
 };
 
 function normalizeAuthPayload(data, fallbackEmail, fallbackName) {
@@ -68,11 +73,63 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
   }
 
   const isLogin = mode === "login";
+  const isRecovery = mode === "recovery";
 
   async function submitAuth(e) {
     e.preventDefault();
     setError("");
     setInfo("");
+
+    if (isRecovery) {
+      if (!email.trim()) {
+        setError("Email is required for password recovery.");
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      let completed = false;
+
+      for (const endpoint of AUTH_ENDPOINTS.recovery) {
+        try {
+          const response = await fetch(`${API_URL}${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email.trim() }),
+          });
+
+          if (response.status === 404) {
+            continue;
+          }
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            setError(data?.message || data?.error || "Password recovery failed.");
+            completed = true;
+            break;
+          }
+
+          setInfo(
+            data?.message ||
+              "If an account exists for that email, password reset instructions will be sent."
+          );
+          completed = true;
+          break;
+        } catch (requestError) {
+          console.error("Password recovery request failed:", requestError);
+        }
+      }
+
+      if (!completed) {
+        setError(
+          "Password recovery is not connected yet. The backend needs a forgot-password or reset-password endpoint first."
+        );
+      }
+
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required.");
@@ -157,16 +214,18 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
           DressCode Account
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-earth-text">
-          {isLogin ? "Sign in" : "Create your account"}
+          {isRecovery ? "Reset your password" : isLogin ? "Sign in" : "Create your account"}
         </h1>
         <p className="mt-3 text-sm text-earth-stone">
-          {isLogin
+          {isRecovery
+            ? "Enter your email and we will request password reset instructions from the backend."
+            : isLogin
             ? "Access your personalized closet and outfit suggestions."
             : "Create an account to save and manage your own wardrobe."}
         </p>
 
         <form onSubmit={submitAuth} className="mt-6 space-y-4">
-          {!isLogin && (
+          {!isLogin && !isRecovery && (
             <div>
               <label className="mb-1 block text-sm font-medium text-earth-text">Name</label>
               <input
@@ -189,7 +248,8 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
             />
           </div>
 
-          <div>
+          {!isRecovery && (
+            <div>
             <label className="mb-1 block text-sm font-medium text-earth-text">Password</label>
             <div className="relative">
               <input
@@ -206,9 +266,10 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-          </div>
+            </div>
+          )}
 
-          {!isLogin && (
+          {!isLogin && !isRecovery && (
             <div>
               <label className="mb-1 block text-sm font-medium text-earth-text">Confirm Password</label>
               <div className="relative">
@@ -242,23 +303,47 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
             disabled={isSubmitting}
             className="w-full rounded-xl bg-earth-moss px-4 py-2.5 text-sm font-semibold text-earth-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isSubmitting ? "Please wait..." : isLogin ? "Sign in" : "Create account"}
+            {isSubmitting
+              ? "Please wait..."
+              : isRecovery
+                ? "Request password reset"
+                : isLogin
+                  ? "Sign in"
+                  : "Create account"}
           </button>
         </form>
 
-        <div className="mt-5 text-sm text-earth-stone">
-          {isLogin ? "No account yet?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setMode(isLogin ? "register" : "login");
-              setError("");
-              setInfo("");
-            }}
-            className="font-semibold text-earth-moss transition-colors hover:text-earth-pine"
-          >
-            {isLogin ? "Create one" : "Sign in"}
-          </button>
+        <div className="mt-5 flex flex-col gap-2 text-sm text-earth-stone sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            {isRecovery ? "Remember your password?" : isLogin ? "No account yet?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(isLogin ? "register" : "login");
+                setError("");
+                setInfo("");
+              }}
+              className="font-semibold text-earth-moss transition-colors hover:text-earth-pine"
+            >
+              {isRecovery ? "Sign in" : isLogin ? "Create one" : "Sign in"}
+            </button>
+          </div>
+
+          {isLogin && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("recovery");
+                setError("");
+                setInfo("");
+                setPassword("");
+                setConfirmPassword("");
+              }}
+              className="text-left font-semibold text-earth-moss transition-colors hover:text-earth-pine sm:text-right"
+            >
+              Forgot password?
+            </button>
+          )}
         </div>
 
         <div className="mt-5 border-t border-earth-sand/50 pt-4 text-sm">

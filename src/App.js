@@ -552,15 +552,17 @@ function App() {
                         <span>Your Closet</span>
                       </h1>
 
-                      <p
-                        className={`mt-3 text-center text-sm font-medium ${
-                          isConnected ? "text-earth-pine" : "text-earth-stone"
-                        }`}
-                      >
-                        {isConnected
-                          ? "Connected to backend"
-                          : "Offline mode (local only)"}
-                      </p>
+                      {DEV_BYPASS_AUTH && (
+                        <p
+                          className={`mt-3 text-center text-sm font-medium ${
+                            isConnected ? "text-earth-pine" : "text-earth-stone"
+                          }`}
+                        >
+                          {isConnected
+                            ? "Connected to backend"
+                            : "Offline mode (local only)"}
+                        </p>
+                      )}
                     </div>
 
                     <ClosetPage
