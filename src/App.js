@@ -179,30 +179,80 @@ function App() {
   useEffect(() => {
     if (!isRegistrationMode || !selectedDeviceId || !isAuthenticated) return;
 
-    const interval = setInterval(() => {
-      fetch(`${API_URL}/pending-scan/${selectedDeviceId}`, {
-        headers: authHeaders(),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.rfid_tag) {
+    let isCancelled = false;
+    let nextPollTimeout = null;
+    const controller = new AbortController();
+
+    async function stopRegistrationSession() {
+      try {
+        await fetch(`${API_URL}/stop-registration`, {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ device_id: selectedDeviceId }),
+        });
+      } catch (err) {
+        console.log("Stop registration after scan failed:", err);
+      }
+    }
+
+    async function pollPendingScan() {
+      if (isCancelled) return;
+
+      try {
+        const response = await fetch(
+          `${API_URL}/pending-scan/${encodeURIComponent(selectedDeviceId)}`,
+          {
+            headers: authHeaders(),
+            signal: controller.signal,
+          }
+        );
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setIsRegistrationMode(false);
+            setDeviceError(
+              response.status === 401
+                ? "Your session expired. Sign out, sign in again, then retry item registration."
+                : data?.error || "Unable to check for pending scans."
+            );
+          }
+          return;
+        }
+
+        if (data?.rfid_tag) {
+          if (!isCancelled) {
             setPendingRfidTag(data.rfid_tag);
             setIsRegistrationMode(false);
             setDeviceMessage("RFID scan received. Add the item details below.");
-
-            fetch(`${API_URL}/stop-registration`, {
-              method: "POST",
-              headers: authHeaders({ "Content-Type": "application/json" }),
-              body: JSON.stringify({ device_id: selectedDeviceId }),
-            }).catch(() => {});
           }
-        })
-        .catch((err) => {
-          console.log("Pending scan polling failed:", err);
-        });
-    }, 2000);
 
-    return () => clearInterval(interval);
+          await stopRegistrationSession();
+          return;
+        }
+
+        if (!isCancelled) {
+          nextPollTimeout = window.setTimeout(pollPendingScan, 2000);
+        }
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        console.log("Pending scan polling failed:", err);
+
+        if (!isCancelled) {
+          nextPollTimeout = window.setTimeout(pollPendingScan, 2000);
+        }
+      }
+    }
+
+    pollPendingScan();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+      if (nextPollTimeout) {
+        window.clearTimeout(nextPollTimeout);
+      }
+    };
   }, [authHeaders, isAuthenticated, isRegistrationMode, selectedDeviceId]);
 
   useEffect(() => {
@@ -299,7 +349,13 @@ function App() {
         return;
       }
 
-      setSelectedDeviceId(data?.device_id || deviceId.trim());
+      const registeredDeviceId = data?.device_id || deviceId.trim();
+      setSelectedDeviceId(registeredDeviceId);
+      setDevices((currentDevices) =>
+        currentDevices.includes(registeredDeviceId)
+          ? currentDevices
+          : [...currentDevices, registeredDeviceId]
+      );
       setDeviceMessage(
         data?.status === "already_owned"
           ? "This device is already connected to your account."
@@ -347,9 +403,12 @@ function App() {
       }
 
       setIsRegistrationMode(nextIsActive);
+      if (nextIsActive) {
+        setPendingRfidTag("");
+      }
       setDeviceMessage(
         nextIsActive
-          ? "Registration mode is on. Scan an RFID tag to attach it to an item."
+          ? `Registration mode is on for ${selectedDeviceId}. Waiting for RFID scan...`
           : "Registration mode is off."
       );
     } catch (err) {
@@ -361,8 +420,8 @@ function App() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    if (isAuthenticated && isConnected && !pendingRfidTag) {
-      setDeviceError("Scan an RFID tag before adding this item.");
+    if (isAuthenticated && !pendingRfidTag) {
+      setDeviceError("Start registration and scan an RFID tag before adding this item.");
       return;
     }
 
@@ -376,7 +435,7 @@ function App() {
       rfid_tag: pendingRfidTag || `${Date.now()}`,
     };
 
-    if (isAuthenticated && isConnected) {
+    if (isAuthenticated) {
       try {
         const response = await fetch(`${API_URL}/add-item`, {
           method: "POST",

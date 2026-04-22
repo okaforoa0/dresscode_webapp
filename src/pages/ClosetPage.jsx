@@ -70,7 +70,7 @@ export default function ClosetPage({
             <button
               type="button"
               onClick={onToggleRegistrationMode}
-              disabled={!isAuthenticated || devices.length === 0}
+              disabled={!isAuthenticated || !selectedDeviceId}
               className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
                 isRegistrationMode
                   ? "bg-[#8b4e3d] text-earth-card hover:bg-[#754131]"
@@ -131,7 +131,7 @@ export default function ClosetPage({
         handleAdd={handleAdd}
         pendingRfidTag={pendingRfidTag}
         isRegistrationMode={isRegistrationMode}
-        requiresRfid={isConnected}
+        requiresRfid={isAuthenticated}
       />
 
       {items.length === 0 ? (
