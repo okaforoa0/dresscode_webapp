@@ -114,8 +114,23 @@ function App() {
     fetch(`${API_URL}/devices`, {
       headers: authHeaders(),
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then((res) =>
+        res.json().then((data) => ({
+          ok: res.ok,
+          status: res.status,
+          data,
+        }))
+      )
+      .then(({ ok, status, data }) => {
+        if (!ok) {
+          setDeviceError(
+            status === 401
+              ? "Your backend session expired. Sign out and sign in again to refresh your token."
+              : data?.error || "Unable to load devices right now."
+          );
+          return;
+        }
+
         const nextDevices = Array.isArray(data?.devices) ? data.devices : [];
         setDevices(nextDevices);
         setSelectedDeviceId((current) => current || nextDevices[0] || "");
@@ -254,6 +269,11 @@ function App() {
     setDeviceError("");
     setDeviceMessage("");
 
+    if (!authToken) {
+      setDeviceError("Please sign in with a real account before registering a device.");
+      return;
+    }
+
     const deviceId = window.prompt(
       "Tap the pairing card, then enter the device ID shown on the LCD."
     );
@@ -269,7 +289,11 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setDeviceError(data?.error || "Unable to register device.");
+        setDeviceError(
+          response.status === 401
+            ? "Your session expired or dev bypass is active. Sign out, sign in again, then retry device registration."
+            : data?.error || "Unable to register device."
+        );
         return;
       }
 
@@ -290,6 +314,11 @@ function App() {
     setDeviceError("");
     setDeviceMessage("");
 
+    if (!authToken) {
+      setDeviceError("Please sign in with a real account before using RFID registration.");
+      return;
+    }
+
     if (!selectedDeviceId) {
       setDeviceError("Register or select a device before starting item registration.");
       return;
@@ -307,7 +336,11 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setDeviceError(data?.error || "Unable to update registration mode.");
+        setDeviceError(
+          response.status === 401
+            ? "Your session expired. Sign out, sign in again, then retry registration mode."
+            : data?.error || "Unable to update registration mode."
+        );
         return;
       }
 
@@ -586,6 +619,7 @@ function App() {
                       pendingRfidTag={pendingRfidTag}
                       onRegisterDevice={handleRegisterDevice}
                       onToggleRegistrationMode={handleToggleRegistrationMode}
+                      isAuthenticated={isAuthenticated}
                     />
                   </div>
                 ) : (
@@ -692,4 +726,3 @@ function App() {
 }
 
 export default App;
-

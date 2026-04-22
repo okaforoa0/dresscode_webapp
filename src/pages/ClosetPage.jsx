@@ -23,6 +23,7 @@ export default function ClosetPage({
   pendingRfidTag,
   onRegisterDevice,
   onToggleRegistrationMode,
+  isAuthenticated,
 }) {
   return (
     <div className="space-y-6">
@@ -60,7 +61,8 @@ export default function ClosetPage({
             <button
               type="button"
               onClick={onRegisterDevice}
-              className="rounded-lg border border-earth-sand px-4 py-2 text-sm font-semibold text-earth-moss transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sand/30 hover:shadow-md"
+              disabled={!isAuthenticated}
+              className="rounded-lg border border-earth-sand px-4 py-2 text-sm font-semibold text-earth-moss transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sand/30 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
             >
               Register Device
             </button>
@@ -68,7 +70,7 @@ export default function ClosetPage({
             <button
               type="button"
               onClick={onToggleRegistrationMode}
-              disabled={devices.length === 0}
+              disabled={!isAuthenticated || devices.length === 0}
               className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
                 isRegistrationMode
                   ? "bg-[#8b4e3d] text-earth-card hover:bg-[#754131]"
@@ -79,6 +81,12 @@ export default function ClosetPage({
             </button>
           </div>
         </div>
+
+        {!isAuthenticated && (
+          <p className="mt-4 rounded-lg bg-[#f7ebe7] px-3 py-2 text-sm text-[#8b4e3d]">
+            Device registration requires a real sign-in. Dev bypass lets you view the page, but it does not create a backend token.
+          </p>
+        )}
 
         <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div className="rounded-xl bg-earth-bg p-4">
