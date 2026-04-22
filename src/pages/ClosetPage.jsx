@@ -10,6 +10,8 @@ export default function ClosetPage({
   setNewColor,
   newType,
   setNewType,
+  newImageUrl,
+  setNewImageUrl,
   handleAdd,
   onToggle,
   onRemove,
@@ -128,6 +130,8 @@ export default function ClosetPage({
         setNewColor={setNewColor}
         newType={newType}
         setNewType={setNewType}
+        newImageUrl={newImageUrl}
+        setNewImageUrl={setNewImageUrl}
         handleAdd={handleAdd}
         pendingRfidTag={pendingRfidTag}
         isRegistrationMode={isRegistrationMode}

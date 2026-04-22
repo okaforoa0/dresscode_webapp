@@ -57,6 +57,8 @@ export default function AddItemForm({
   setNewColor,
   newType,
   setNewType,
+  newImageUrl,
+  setNewImageUrl,
   handleAdd,
   pendingRfidTag = "",
   isRegistrationMode = false,
@@ -143,6 +145,13 @@ export default function AddItemForm({
             <option key={type} value={type} />
           ))}
         </datalist>
+
+        <input
+          value={newImageUrl}
+          onChange={(e) => setNewImageUrl(e.target.value)}
+          placeholder="Image URL (optional)"
+          className="rounded-lg border border-earth-sand/40 bg-earth-card px-3 py-2 text-sm text-earth-text outline-none transition-all duration-200 placeholder:text-earth-stone focus:border-earth-moss focus:ring-2 focus:ring-earth-sand/50 sm:col-span-2 lg:col-span-3"
+        />
 
         <button
           type="submit"

@@ -31,6 +31,7 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("");
   const [newType, setNewType] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [devices, setDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -433,6 +434,7 @@ function App() {
       type: newType || "-",
       is_checked_out: 0,
       rfid_tag: pendingRfidTag || `${Date.now()}`,
+      image_url: newImageUrl || "",
     };
 
     if (isAuthenticated) {
@@ -446,7 +448,7 @@ function App() {
             color: newColor || "-",
             type: newType || "-",
             description: "",
-            image_url: "",
+            image_url: newImageUrl || "",
           }),
         });
         const data = await response.json().catch(() => ({}));
@@ -470,6 +472,7 @@ function App() {
     setNewName("");
     setNewColor("");
     setNewType("");
+    setNewImageUrl("");
   }
 
   async function handleToggle(id) {
@@ -667,6 +670,8 @@ function App() {
                       setNewColor={setNewColor}
                       newType={newType}
                       setNewType={setNewType}
+                      newImageUrl={newImageUrl}
+                      setNewImageUrl={setNewImageUrl}
                       handleAdd={handleAdd}
                       onToggle={handleToggle}
                       onRemove={handleRemove}

@@ -1,4 +1,5 @@
 export default function ClosetItem({ item, onToggle, isConnected, onRemove }) {
+  const imageUrl = item.image_url || item.Image_URL || "";
   const statusLabel = item.is_checked_out ? "Checked out" : "In closet";
   const statusClasses = item.is_checked_out
     ? "bg-[#f3e4de] text-earth-clay"
@@ -6,6 +7,23 @@ export default function ClosetItem({ item, onToggle, isConnected, onRemove }) {
 
   return (
     <div className="h-full rounded-[1.5rem] border border-earth-sand/40 bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+      <div className="mb-5 overflow-hidden rounded-2xl bg-earth-bg">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.item_name || "Closet item"}
+            className="h-48 w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <div className="flex h-48 items-center justify-center px-6 text-center text-sm font-medium text-earth-stone">
+            No image added
+          </div>
+        )}
+      </div>
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-earth-moss">
