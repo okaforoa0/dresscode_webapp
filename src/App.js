@@ -242,7 +242,7 @@ function App() {
     }
   }
 
-  async function refreshDevices() {
+  async function refreshDevices({ preserveMessage = false } = {}) {
     if (!isAuthenticated) return;
 
     try {
@@ -254,14 +254,16 @@ function App() {
 
       setDevices(nextDevices);
       setSelectedDeviceId((current) => current || nextDevices[0] || "");
-      setDeviceMessage(
-        nextDevices.length === 0
-          ? "No device registered yet. Register a device before scanning items."
-          : ""
-      );
+
+      if (!preserveMessage) {
+        setDeviceMessage(
+          nextDevices.length === 0
+            ? "No device registered yet. Register a device before scanning items."
+            : ""
+        );
+      }
     } catch (err) {
       console.log("Device refresh failed:", err);
-      setDeviceError("Unable to refresh devices right now.");
     }
   }
 
@@ -303,7 +305,7 @@ function App() {
           ? "This device is already connected to your account."
           : "Device registered successfully."
       );
-      await refreshDevices();
+      await refreshDevices({ preserveMessage: true });
     } catch (err) {
       console.log("Device registration failed:", err);
       setDeviceError("Unable to register device right now.");
