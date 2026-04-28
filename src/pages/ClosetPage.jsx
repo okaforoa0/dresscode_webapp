@@ -202,8 +202,56 @@ export default function ClosetPage({
       />
 
       {items.length === 0 ? (
-        <div className="rounded-xl bg-earth-card p-6 text-center text-earth-stone shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-          No items found.
+        <div className="rounded-[1.5rem] bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-earth-moss">
+              Closet Empty
+            </p>
+            <h3 className="mt-3 text-2xl font-semibold text-earth-text">
+              Your wardrobe is ready for its first item
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-earth-stone">
+              Register your device, start RFID registration mode, scan a tag, then save the item details here.
+            </p>
+
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={onRegisterDevice}
+                disabled={!isAuthenticated}
+                className="rounded-lg border border-earth-sand px-4 py-2 text-sm font-semibold text-earth-moss transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sand/30 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Register Device
+              </button>
+              <button
+                type="button"
+                onClick={onToggleRegistrationMode}
+                disabled={!isAuthenticated || !selectedDeviceId}
+                className="rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isRegistrationMode ? "Stop Registration" : "Start Registration"}
+              </button>
+            </div>
+
+            {!isAuthenticated && (
+              <p className="mt-4 text-sm text-earth-stone">
+                Dev mode can preview the page, but real item registration still needs a signed-in account.
+              </p>
+            )}
+
+            <div className="mt-6 rounded-2xl bg-earth-bg p-4 text-left">
+              <p className="text-sm font-semibold text-earth-text">Quick flow</p>
+              <p className="mt-2 text-sm leading-6 text-earth-stone">
+                1. Register the device.
+                <br />
+                2. Start registration mode.
+                <br />
+                3. Scan the RFID tag.
+                <br />
+                4. Fill in the item details and save.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -286,8 +334,20 @@ export default function ClosetPage({
           </div>
 
           {filteredItems.length === 0 ? (
-            <div className="rounded-xl bg-earth-card p-6 text-center text-earth-stone shadow-sm">
-              No items match your filters.
+            <div className="rounded-[1.5rem] bg-earth-card p-6 text-center shadow-sm">
+              <p className="text-lg font-semibold text-earth-text">No items match these filters</p>
+              <p className="mt-2 text-sm text-earth-stone">
+                Try a broader search or clear the filters to see your full closet again.
+              </p>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
           ) : (
             <>

@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { TbHanger } from "react-icons/tb";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+
+function LoadingCard({ className = "" }) {
+  return (
+    <div className={`animate-pulse rounded-[1.5rem] border border-earth-sand/30 bg-earth-card/80 p-5 ${className}`}>
+      <div className="h-3 w-24 rounded-full bg-earth-sand/50" />
+      <div className="mt-4 h-8 w-3/4 rounded-full bg-earth-sand/40" />
+      <div className="mt-4 space-y-3">
+        <div className="h-20 rounded-2xl bg-earth-bg" />
+        <div className="h-20 rounded-2xl bg-earth-bg" />
+      </div>
+    </div>
+  );
+}
 
 function normalizeType(value) {
   return String(value || "")
@@ -251,6 +266,8 @@ function SuggestionPiece({ label, item }) {
 }
 
 function WrappedItemCard({ title, item, footer }) {
+  const [hasImageError, setHasImageError] = useState(false);
+
   if (!item) {
     return (
       <div className="rounded-[1.75rem] border border-earth-sand/30 bg-earth-card/80 p-6 shadow-sm backdrop-blur-sm">
@@ -271,18 +288,26 @@ function WrappedItemCard({ title, item, footer }) {
       </p>
 
       <div className="mt-5 overflow-hidden rounded-[1.25rem] bg-earth-bg">
-        {imageUrl ? (
+        {imageUrl && !hasImageError ? (
           <img
             src={imageUrl}
             alt={item.item_name || title}
             className="h-48 w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
+            onError={() => {
+              setHasImageError(true);
             }}
           />
         ) : (
-          <div className="flex h-44 items-center justify-center px-6 text-center text-sm font-medium text-earth-stone">
-            No image available
+          <div className="flex h-48 flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_top,_rgba(154,170,138,0.18),_transparent_55%),linear-gradient(180deg,_rgba(243,239,232,0.95),_rgba(233,225,211,0.95))] px-6 text-center">
+            <div className="rounded-full bg-earth-card/80 p-3 shadow-sm">
+              <TbHanger className="text-3xl text-earth-moss" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-earth-text">No image available</p>
+              <p className="mt-1 text-xs text-earth-stone">
+                This stat card does not have an image yet.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -345,6 +370,14 @@ export default function OutfitSuggestions({ items }) {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.setItem(
+              "dresscodeAuthNotice",
+              "Your session expired. Please sign in again to load Closet Wrapped."
+            );
+            localStorage.removeItem("dresscodeAuth");
+            throw new Error("Session expired. Sign in again to continue.");
+          }
           throw new Error(data?.error || "Unable to load Closet Wrapped.");
         }
 
@@ -406,8 +439,15 @@ export default function OutfitSuggestions({ items }) {
   if (!weather) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-xl bg-earth-card p-6 text-sm text-earth-stone shadow-sm">
-          Loading weather...
+        <div className="rounded-xl bg-earth-card p-6 shadow-sm">
+          <div className="animate-pulse">
+            <div className="h-4 w-40 rounded-full bg-earth-sand/40" />
+            <div className="mt-4 grid gap-6 lg:grid-cols-3">
+              <LoadingCard />
+              <LoadingCard />
+              <LoadingCard />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -430,14 +470,34 @@ export default function OutfitSuggestions({ items }) {
         </div>
 
         {!hasCoreItems ? (
-          <div className="mt-5 rounded-xl bg-earth-bg p-4 text-sm text-earth-stone">
-            Add a couple more clothing items to start getting better outfit combinations. Right
-            now, tops, bottoms, dresses, and shoes will help the suggestions feel smarter.
+          <div className="mt-5 rounded-xl bg-earth-bg p-5 text-sm text-earth-stone">
+            <p>
+              Add a couple more clothing items to start getting better outfit combinations. Right
+              now, tops, bottoms, dresses, and shoes will help the suggestions feel smarter.
+            </p>
+            <div className="mt-4">
+              <Link
+                to="/closet"
+                className="inline-flex rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md"
+              >
+                Add More Items
+              </Link>
+            </div>
           </div>
         ) : outfits.length === 0 ? (
-          <div className="mt-5 rounded-xl bg-earth-bg p-4 text-sm text-earth-stone">
-            I found clothing in your closet, but not enough matching pieces to build a complete
-            outfit for this weather yet. Try adding more tops, bottoms, dresses, or outerwear.
+          <div className="mt-5 rounded-xl bg-earth-bg p-5 text-sm text-earth-stone">
+            <p>
+              I found clothing in your closet, but not enough matching pieces to build a complete
+              outfit for this weather yet. Try adding more tops, bottoms, dresses, or outerwear.
+            </p>
+            <div className="mt-4">
+              <Link
+                to="/closet"
+                className="inline-flex rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md"
+              >
+                Go to Closet
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="mt-6 space-y-4">
@@ -507,12 +567,24 @@ export default function OutfitSuggestions({ items }) {
         </div>
 
         {isWrappedLoading ? (
-          <div className="relative mt-6 rounded-[1.5rem] border border-earth-card/10 bg-earth-card/10 p-5 text-sm text-earth-card/80 backdrop-blur-sm">
-            Loading Closet Wrapped...
+          <div className="relative mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+            <LoadingCard className="border-earth-card/15 bg-earth-card/10" />
+            <LoadingCard className="border-earth-card/15 bg-earth-card/10" />
+            <LoadingCard className="border-earth-card/15 bg-earth-card/10" />
           </div>
         ) : wrappedError ? (
-          <div className="relative mt-6 rounded-[1.5rem] border border-earth-card/10 bg-earth-card/10 p-5 text-sm text-earth-card/80 backdrop-blur-sm">
-            {wrappedError}
+          <div className="relative mt-6 rounded-[1.5rem] border border-earth-card/10 bg-earth-card/10 p-5 backdrop-blur-sm">
+            <p className="text-sm text-earth-card/80">{wrappedError}</p>
+            {wrappedError.toLowerCase().includes("sign in") && (
+              <div className="mt-4">
+                <Link
+                  to="/auth"
+                  className="inline-flex rounded-lg bg-earth-card px-4 py-2 text-sm font-semibold text-earth-text transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                >
+                  Sign In Again
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="relative mt-8 space-y-6">
@@ -629,6 +701,22 @@ export default function OutfitSuggestions({ items }) {
                 </div>
               </div>
             </div>
+
+            {!wrappedStats?.total_wears && !wrappedStats?.current_favorites?.length && !wrappedStats?.look_again_items?.length && (
+              <div className="rounded-[1.5rem] border border-earth-card/15 bg-earth-card/10 p-5 text-earth-card/80 backdrop-blur-sm">
+                <p className="text-sm">
+                  Start wearing and scanning items to build your Closet Wrapped story.
+                </p>
+                <div className="mt-4">
+                  <Link
+                    to="/closet"
+                    className="inline-flex rounded-lg bg-earth-card px-4 py-2 text-sm font-semibold text-earth-text transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                  >
+                    Go to Closet
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

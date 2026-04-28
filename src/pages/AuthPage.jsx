@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
@@ -67,6 +67,15 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const authNotice = localStorage.getItem("dresscodeAuthNotice");
+
+    if (authNotice) {
+      setInfo(authNotice);
+      localStorage.removeItem("dresscodeAuthNotice");
+    }
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/closet" replace />;

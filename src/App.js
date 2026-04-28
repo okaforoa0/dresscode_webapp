@@ -75,6 +75,22 @@ function App() {
 
   const visibleItems = filterItemsForCurrentUser(items);
 
+  const handleSessionExpired = useCallback((message) => {
+    localStorage.setItem(
+      "dresscodeAuthNotice",
+      message || "Your session expired. Please sign in again."
+    );
+    setAuth(null);
+    setItems([]);
+    setDevices([]);
+    setSelectedDeviceId("");
+    setDeviceMessage("");
+    setDeviceError("");
+    setIsRegistrationMode(false);
+    setPendingRfidTag("");
+    localStorage.removeItem("dresscodeAuth");
+  }, []);
+
   function handleAuthSuccess(payload) {
     setAuth(payload);
     localStorage.setItem("dresscodeAuth", JSON.stringify(payload));
@@ -99,15 +115,20 @@ function App() {
     fetch(`${API_URL}/items`, {
       headers: authHeaders(),
     })
-      .then((res) => {
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          handleSessionExpired("Your session expired. Please sign in again.");
+          return null;
+        }
         if (res.ok) setIsConnected(true);
-        return res.json();
+        return data;
       })
       .then((data) => {
         if (data && Array.isArray(data)) setItems(filterItemsForCurrentUser(data));
       })
       .catch(() => console.log("Backend not available - using local data"));
-  }, [authHeaders, canAccessProtected, filterItemsForCurrentUser]);
+  }, [authHeaders, canAccessProtected, filterItemsForCurrentUser, handleSessionExpired]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -124,11 +145,11 @@ function App() {
       )
       .then(({ ok, status, data }) => {
         if (!ok) {
-          setDeviceError(
-            status === 401
-              ? "Your backend session expired. Sign out and sign in again to refresh your token."
-              : data?.error || "Unable to load devices right now."
-          );
+          if (status === 401) {
+            handleSessionExpired("Your backend session expired. Please sign in again.");
+            return;
+          }
+          setDeviceError(data?.error || "Unable to load devices right now.");
           return;
         }
 
@@ -146,7 +167,7 @@ function App() {
         console.log("Device fetch failed:", err);
         setDeviceError("Unable to load devices right now.");
       });
-  }, [authHeaders, isAuthenticated]);
+  }, [authHeaders, handleSessionExpired, isAuthenticated]);
 
   useEffect(() => {
     if (!canAccessProtected) return;
@@ -163,7 +184,14 @@ function App() {
       fetch(`${API_URL}/items`, {
         headers: authHeaders(),
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 401) {
+            handleSessionExpired("Your session expired. Please sign in again.");
+            return null;
+          }
+          return data;
+        })
         .then((data) => {
           if (Array.isArray(data)) {
             setItems(filterItemsForCurrentUser(data));
@@ -175,7 +203,7 @@ function App() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [authHeaders, isConnected, canAccessProtected, filterItemsForCurrentUser]);
+  }, [authHeaders, isConnected, canAccessProtected, filterItemsForCurrentUser, handleSessionExpired]);
 
   useEffect(() => {
     if (!isRegistrationMode || !selectedDeviceId || !isAuthenticated) return;
@@ -212,11 +240,11 @@ function App() {
         if (!response.ok) {
           if (!isCancelled) {
             setIsRegistrationMode(false);
-            setDeviceError(
-              response.status === 401
-                ? "Your session expired. Sign out, sign in again, then retry item registration."
-                : data?.error || "Unable to check for pending scans."
-            );
+            if (response.status === 401) {
+              handleSessionExpired("Your session expired. Please sign in again to continue scanning.");
+              return;
+            }
+            setDeviceError(data?.error || "Unable to check for pending scans.");
           }
           return;
         }
@@ -254,7 +282,7 @@ function App() {
         window.clearTimeout(nextPollTimeout);
       }
     };
-  }, [authHeaders, isAuthenticated, isRegistrationMode, selectedDeviceId]);
+  }, [authHeaders, handleSessionExpired, isAuthenticated, isRegistrationMode, selectedDeviceId]);
 
   useEffect(() => {
     if (!isRegistrationMode) return;
@@ -284,6 +312,11 @@ function App() {
       });
       const data = await response.json();
 
+      if (response.status === 401) {
+        handleSessionExpired("Your session expired. Please sign in again.");
+        return;
+      }
+
       if (response.ok && Array.isArray(data)) {
         setIsConnected(true);
         setItems(filterItemsForCurrentUser(data));
@@ -301,6 +334,10 @@ function App() {
         headers: authHeaders(),
       });
       const data = await response.json();
+      if (response.status === 401) {
+        handleSessionExpired("Your session expired. Please sign in again.");
+        return;
+      }
       const nextDevices = Array.isArray(data?.devices) ? data.devices : [];
 
       setDevices(nextDevices);
@@ -342,11 +379,11 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setDeviceError(
-          response.status === 401
-            ? "Your session expired or dev bypass is active. Sign out, sign in again, then retry device registration."
-            : data?.error || "Unable to register device."
-        );
+        if (response.status === 401) {
+          handleSessionExpired("Your session expired. Please sign in again to register a device.");
+          return;
+        }
+        setDeviceError(data?.error || "Unable to register device.");
         return;
       }
 
@@ -395,11 +432,11 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setDeviceError(
-          response.status === 401
-            ? "Your session expired. Sign out, sign in again, then retry registration mode."
-            : data?.error || "Unable to update registration mode."
-        );
+        if (response.status === 401) {
+          handleSessionExpired("Your session expired. Please sign in again to use RFID registration.");
+          return;
+        }
+        setDeviceError(data?.error || "Unable to update registration mode.");
         return;
       }
 
@@ -454,6 +491,10 @@ function App() {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
+          if (response.status === 401) {
+            handleSessionExpired("Your session expired. Please sign in again to add items.");
+            return;
+          }
           setDeviceError(data?.error || "Unable to add item.");
           return;
         }
@@ -512,6 +553,10 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleSessionExpired("Your session expired. Please sign in again to delete items.");
+          return;
+        }
         setDeviceError(data?.error || "Unable to delete item.");
         await refreshItems();
         return;
