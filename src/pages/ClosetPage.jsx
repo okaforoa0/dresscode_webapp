@@ -173,17 +173,6 @@ export default function ClosetPage({
           </div>
         </div>
 
-        {deviceMessage && (
-          <p className="mt-4 rounded-lg bg-[#e8f1ea] px-3 py-2 text-sm text-[#3f6b4b]">
-            {deviceMessage}
-          </p>
-        )}
-
-        {deviceError && (
-          <p className="mt-4 rounded-lg bg-[#f7ebe7] px-3 py-2 text-sm text-[#8b4e3d]">
-            {deviceError}
-          </p>
-        )}
       </div>
 
       <AddItemForm

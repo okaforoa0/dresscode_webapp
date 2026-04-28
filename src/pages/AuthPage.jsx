@@ -54,7 +54,7 @@ function normalizeAuthPayload(data, fallbackEmail, fallbackName) {
   };
 }
 
-export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
+export default function AuthPage({ isAuthenticated, onAuthSuccess, onToast }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -77,12 +77,33 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
     }
   }, []);
 
+  const isLogin = mode === "login";
+  const isRecovery = mode === "recovery";
+
+  useEffect(() => {
+    if (!error || !onToast) return;
+
+    onToast({
+      type: "error",
+      title: "Authentication issue",
+      message: error,
+    });
+  }, [error, onToast]);
+
+  useEffect(() => {
+    if (!info || !onToast) return;
+    if (info.toLowerCase().includes("session expired")) return;
+
+    onToast({
+      type: "success",
+      title: isRecovery ? "Password recovery" : "Account update",
+      message: info,
+    });
+  }, [info, isRecovery, onToast]);
+
   if (isAuthenticated) {
     return <Navigate to="/closet" replace />;
   }
-
-  const isLogin = mode === "login";
-  const isRecovery = mode === "recovery";
 
   async function submitAuth(e) {
     e.preventDefault();
@@ -297,14 +318,6 @@ export default function AuthPage({ isAuthenticated, onAuthSuccess }) {
                 </button>
               </div>
             </div>
-          )}
-
-          {error && (
-            <p className="rounded-lg bg-[#f7ebe7] px-3 py-2 text-sm text-[#8b4e3d]">{error}</p>
-          )}
-
-          {info && (
-            <p className="rounded-lg bg-[#e8f1ea] px-3 py-2 text-sm text-[#3f6b4b]">{info}</p>
           )}
 
           <button

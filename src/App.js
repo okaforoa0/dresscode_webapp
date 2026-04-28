@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ClosetPage from "./pages/ClosetPage";
 import HomePage from "./pages/HomePage";
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -22,6 +22,42 @@ function ScrollToTop() {
   return null;
 }
 
+function ToastViewport({ toasts, onDismiss }) {
+  return (
+    <div className="pointer-events-none fixed right-4 top-20 z-[70] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3">
+      {toasts.map((toast) => {
+        const toneClasses =
+          toast.type === "success"
+            ? "border-[#bfd4c4] bg-[#edf5ef] text-[#335741]"
+            : toast.type === "error"
+              ? "border-[#e4c5b9] bg-[#fbf1ec] text-[#8b4e3d]"
+              : "border-earth-sand/50 bg-earth-card text-earth-text";
+
+        return (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200 ${toneClasses}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">{toast.title}</p>
+                {toast.message && <p className="mt-1 text-sm opacity-90">{toast.message}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={() => onDismiss(toast.id)}
+                className="rounded-md px-2 py-1 text-xs font-semibold opacity-70 transition-opacity hover:opacity-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function App() {
   const [items, setItems] = useState(() => {
     const saved = localStorage.getItem("closetItems");
@@ -43,6 +79,8 @@ function App() {
     const saved = localStorage.getItem("dresscodeAuth");
     return saved ? JSON.parse(saved) : null;
   });
+  const [toasts, setToasts] = useState([]);
+  const toastTimeoutsRef = useRef(new Map());
 
   const isAuthenticated = Boolean(auth?.user?.email || auth?.user?.id);
   const canAccessProtected = isAuthenticated || DEV_BYPASS_AUTH;
@@ -75,6 +113,30 @@ function App() {
 
   const visibleItems = filterItemsForCurrentUser(items);
 
+  const dismissToast = useCallback((id) => {
+    const timeoutId = toastTimeoutsRef.current.get(id);
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+      toastTimeoutsRef.current.delete(id);
+    }
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }, []);
+
+  const showToast = useCallback(
+    ({ type = "info", title, message = "", duration = 3500 }) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setToasts((current) => [...current, { id, type, title, message }]);
+
+      const timeoutId = window.setTimeout(() => {
+        setToasts((current) => current.filter((toast) => toast.id !== id));
+        toastTimeoutsRef.current.delete(id);
+      }, duration);
+
+      toastTimeoutsRef.current.set(id, timeoutId);
+    },
+    []
+  );
+
   const handleSessionExpired = useCallback((message) => {
     localStorage.setItem(
       "dresscodeAuthNotice",
@@ -89,11 +151,22 @@ function App() {
     setIsRegistrationMode(false);
     setPendingRfidTag("");
     localStorage.removeItem("dresscodeAuth");
-  }, []);
+    showToast({
+      type: "error",
+      title: "Session expired",
+      message: message || "Please sign in again.",
+      duration: 5000,
+    });
+  }, [showToast]);
 
   function handleAuthSuccess(payload) {
     setAuth(payload);
     localStorage.setItem("dresscodeAuth", JSON.stringify(payload));
+    showToast({
+      type: "success",
+      title: "Signed in",
+      message: `Welcome back${payload?.user?.name ? `, ${payload.user.name}` : ""}.`,
+    });
   }
 
   function handleLogout() {
@@ -107,7 +180,17 @@ function App() {
     setIsRegistrationMode(false);
     setPendingRfidTag("");
     localStorage.removeItem("dresscodeAuth");
+    showToast({
+      type: "info",
+      title: "Signed out",
+      message: "Your session has been cleared on this device.",
+    });
   }
+
+  useEffect(() => () => {
+    toastTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    toastTimeoutsRef.current.clear();
+  }, []);
 
   useEffect(() => {
     if (!canAccessProtected) return;
@@ -399,10 +482,23 @@ function App() {
           ? "This device is already connected to your account."
           : "Device registered successfully."
       );
+      showToast({
+        type: "success",
+        title: data?.status === "already_owned" ? "Device already connected" : "Device registered",
+        message:
+          data?.status === "already_owned"
+            ? "This reader is already linked to your account."
+            : `${registeredDeviceId} is ready to use.`,
+      });
       await refreshDevices({ preserveMessage: true });
     } catch (err) {
       console.log("Device registration failed:", err);
       setDeviceError("Unable to register device right now.");
+      showToast({
+        type: "error",
+        title: "Device registration failed",
+        message: "Try again in a moment.",
+      });
     }
   }
 
@@ -449,9 +545,21 @@ function App() {
           ? `Registration mode is on for ${selectedDeviceId}. Waiting for RFID scan...`
           : "Registration mode is off."
       );
+      showToast({
+        type: "info",
+        title: nextIsActive ? "Registration mode on" : "Registration mode off",
+        message: nextIsActive
+          ? `Waiting for a scan from ${selectedDeviceId}.`
+          : "RFID registration has been stopped.",
+      });
     } catch (err) {
       console.log("Registration mode toggle failed:", err);
       setDeviceError("Unable to update registration mode right now.");
+      showToast({
+        type: "error",
+        title: "Registration update failed",
+        message: "The reader mode could not be changed right now.",
+      });
     }
   }
 
@@ -501,13 +609,28 @@ function App() {
 
         setDeviceMessage("Item added successfully.");
         setPendingRfidTag("");
+        showToast({
+          type: "success",
+          title: "Item added",
+          message: `${newName.trim()} was saved to your closet.`,
+        });
         await refreshItems();
       } catch (err) {
         console.warn("Couldn't reach backend, item saved locally.", err);
         setItems([newItem, ...items]);
+        showToast({
+          type: "info",
+          title: "Saved locally",
+          message: `${newName.trim()} was stored on this device for now.`,
+        });
       }
     } else {
       setItems([newItem, ...items]);
+      showToast({
+        type: "success",
+        title: "Item added",
+        message: `${newName.trim()} was added to your closet.`,
+      });
     }
 
     setNewName("");
@@ -563,9 +686,19 @@ function App() {
       }
 
       setDeviceMessage("Item deleted successfully.");
+      showToast({
+        type: "success",
+        title: "Item removed",
+        message: "The closet item was deleted successfully.",
+      });
     } catch (err) {
       console.log("Delete item failed:", err);
       setDeviceError("Unable to delete item right now.");
+      showToast({
+        type: "error",
+        title: "Delete failed",
+        message: "The item could not be removed right now.",
+      });
       await refreshItems();
     }
   }
@@ -573,6 +706,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
+      <ToastViewport toasts={toasts} onDismiss={dismissToast} />
       <div className="flex min-h-screen flex-col bg-earth-bg text-earth-text">
         <header className="sticky top-0 z-50 border-b border-earth-sand/60 bg-earth-card/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
@@ -678,7 +812,11 @@ function App() {
                 canAccessProtected ? (
                   <Navigate to="/closet" replace />
                 ) : (
-                  <AuthPage isAuthenticated={isAuthenticated} onAuthSuccess={handleAuthSuccess} />
+                  <AuthPage
+                    isAuthenticated={isAuthenticated}
+                    onAuthSuccess={handleAuthSuccess}
+                    onToast={showToast}
+                  />
                 )
               }
             />
