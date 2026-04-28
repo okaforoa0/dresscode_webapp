@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+
 function normalizeType(value) {
   return String(value || "")
     .trim()
@@ -248,9 +250,58 @@ function SuggestionPiece({ label, item }) {
   );
 }
 
+function WrappedItemCard({ title, item, footer }) {
+  if (!item) {
+    return (
+      <div className="rounded-[1.75rem] border border-earth-sand/30 bg-earth-card/80 p-6 shadow-sm backdrop-blur-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-moss">
+          {title}
+        </p>
+        <p className="mt-4 text-sm text-earth-stone">Not enough wear data yet.</p>
+      </div>
+    );
+  }
+
+  const imageUrl = item.image_url || item.Image_URL || "";
+
+  return (
+    <div className="rounded-[1.75rem] border border-earth-sand/30 bg-earth-card/85 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-moss">
+        {title}
+      </p>
+
+      <div className="mt-5 overflow-hidden rounded-[1.25rem] bg-earth-bg">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.item_name || title}
+            className="h-48 w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <div className="flex h-44 items-center justify-center px-6 text-center text-sm font-medium text-earth-stone">
+            No image available
+          </div>
+        )}
+      </div>
+
+      <h3 className="mt-5 text-2xl font-semibold tracking-tight text-earth-text">{item.item_name}</h3>
+      <p className="mt-1 text-sm text-earth-stone">
+        {[item.color, item.type].filter(Boolean).join(" - ")}
+      </p>
+      {footer && <p className="mt-4 text-sm font-medium text-earth-pine">{footer}</p>}
+    </div>
+  );
+}
+
 export default function OutfitSuggestions({ items }) {
   const [weather, setWeather] = useState(null);
   const [weatherError, setWeatherError] = useState("");
+  const [wrappedStats, setWrappedStats] = useState(null);
+  const [wrappedError, setWrappedError] = useState("");
+  const [isWrappedLoading, setIsWrappedLoading] = useState(true);
 
   useEffect(() => {
     const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
@@ -272,6 +323,40 @@ export default function OutfitSuggestions({ items }) {
       .catch((error) => {
         console.error("Error fetching weather data:", error);
         setWeatherError("Unable to fetch weather data right now.");
+      });
+  }, []);
+
+  useEffect(() => {
+    const authData = localStorage.getItem("dresscodeAuth");
+    const token = authData ? JSON.parse(authData)?.token : "";
+
+    if (!token) {
+      setWrappedError("Sign in again to load your Closet Wrapped stats.");
+      setIsWrappedLoading(false);
+      return;
+    }
+
+    fetch(`${API_URL}/closet-wrapped`, {
+      headers: {
+        Authorization: token,
+      },
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Unable to load Closet Wrapped.");
+        }
+
+        setWrappedStats(data);
+        setWrappedError("");
+      })
+      .catch((error) => {
+        console.error("Error fetching closet wrapped:", error);
+        setWrappedError(error.message || "Unable to load Closet Wrapped.");
+      })
+      .finally(() => {
+        setIsWrappedLoading(false);
       });
   }, []);
 
@@ -395,6 +480,154 @@ export default function OutfitSuggestions({ items }) {
               {outfits.map((outfit) => (
                 <div key={outfit.title}>{renderOutfitCard(outfit)}</div>
               ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="relative mt-6 overflow-hidden rounded-[2rem] border border-earth-sand/30 bg-[radial-gradient(circle_at_top_left,_rgba(203,187,165,0.35),_transparent_30%),linear-gradient(135deg,_rgba(111,127,104,0.95),_rgba(63,58,52,0.98))] p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8">
+        <div className="pointer-events-none absolute -right-10 top-8 h-40 w-40 rounded-full bg-earth-sand/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-48 w-48 rounded-full bg-earth-card/10 blur-3xl" />
+
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-earth-card/70">
+              Closet Wrapped
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-earth-card sm:text-4xl">
+              Your wardrobe listening report
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-earth-card/75">
+              A quick snapshot of what you wear the most, what deserves more love, and your current favorites.
+            </p>
+          </div>
+          <p className="rounded-full border border-earth-card/15 bg-earth-card/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-earth-card/80 backdrop-blur-sm">
+            Based on scan history
+          </p>
+        </div>
+
+        {isWrappedLoading ? (
+          <div className="relative mt-6 rounded-[1.5rem] border border-earth-card/10 bg-earth-card/10 p-5 text-sm text-earth-card/80 backdrop-blur-sm">
+            Loading Closet Wrapped...
+          </div>
+        ) : wrappedError ? (
+          <div className="relative mt-6 rounded-[1.5rem] border border-earth-card/10 bg-earth-card/10 p-5 text-sm text-earth-card/80 backdrop-blur-sm">
+            {wrappedError}
+          </div>
+        ) : (
+          <div className="relative mt-8 space-y-6">
+            <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+              <div className="rounded-[1.75rem] border border-earth-card/15 bg-earth-card/12 p-6 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-card/65">
+                  Total Wears
+                </p>
+                <p className="mt-3 text-5xl font-semibold tracking-tight text-earth-card sm:text-6xl">
+                  {wrappedStats?.total_wears ?? 0}
+                </p>
+                <p className="mt-3 text-sm text-earth-card/70">
+                  Total times your items were checked out from the closet.
+                </p>
+              </div>
+
+              <div className="rounded-[1.75rem] border border-earth-card/15 bg-earth-card/10 p-6 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-card/65">
+                  Top Type
+                </p>
+                <p className="mt-4 text-2xl font-semibold tracking-tight text-earth-card">
+                  {wrappedStats?.most_worn_type?.type || "No data yet"}
+                </p>
+                {wrappedStats?.most_worn_type?.wear_count != null && (
+                  <p className="mt-2 text-sm text-earth-card/75">
+                    {wrappedStats.most_worn_type.wear_count} wears
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-[1.75rem] border border-earth-card/15 bg-earth-card/10 p-6 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-card/65">
+                  Top Color
+                </p>
+                <p className="mt-4 text-2xl font-semibold tracking-tight text-earth-card">
+                  {wrappedStats?.most_worn_color?.color || "No data yet"}
+                </p>
+                {wrappedStats?.most_worn_color?.wear_count != null && (
+                  <p className="mt-2 text-sm text-earth-card/75">
+                    {wrappedStats.most_worn_color.wear_count} wears
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <WrappedItemCard
+                title="Most Worn"
+                item={wrappedStats?.most_worn_item}
+                footer={
+                  wrappedStats?.most_worn_item?.wear_count != null
+                    ? `${wrappedStats.most_worn_item.wear_count} wears`
+                    : ""
+                }
+              />
+
+              <WrappedItemCard
+                title="Least Worn"
+                item={wrappedStats?.least_worn_item}
+                footer={
+                  wrappedStats?.least_worn_item?.wear_count != null
+                    ? `${wrappedStats.least_worn_item.wear_count} wears`
+                    : ""
+                }
+              />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[1.75rem] border border-earth-card/15 bg-earth-card/10 p-6 backdrop-blur-sm shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-card/70">
+                  Current Favorites
+                </p>
+                <div className="mt-4 space-y-3">
+                  {wrappedStats?.current_favorites?.length ? (
+                    wrappedStats.current_favorites.map((item) => (
+                      <div key={item.id} className="rounded-[1.25rem] bg-earth-card/80 p-4">
+                        <p className="font-medium text-earth-text">{item.item_name}</p>
+                        <p className="mt-1 text-sm text-earth-stone">
+                          {[item.color, item.type].filter(Boolean).join(" - ")}
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-earth-pine">
+                          {item.recent_wear_count} recent wears
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-earth-card/75">No recent favorites yet.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-[1.75rem] border border-earth-card/15 bg-earth-card/10 p-6 backdrop-blur-sm shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-earth-card/70">
+                  Revisit These
+                </p>
+                <div className="mt-4 space-y-3">
+                  {wrappedStats?.look_again_items?.length ? (
+                    wrappedStats.look_again_items.map((item) => (
+                      <div key={item.id} className="rounded-[1.25rem] bg-earth-card/80 p-4">
+                        <p className="font-medium text-earth-text">{item.item_name}</p>
+                        <p className="mt-1 text-sm text-earth-stone">
+                          {[item.color, item.type].filter(Boolean).join(" - ")}
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-earth-pine">
+                          {item.wear_count === 0
+                            ? "Never worn yet"
+                            : `Worn ${item.wear_count} time${item.wear_count === 1 ? "" : "s"}`}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-earth-card/75">Nothing to revisit right now.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
