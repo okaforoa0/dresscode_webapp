@@ -22,24 +22,39 @@ export default function GettingStarted() {
 
   const steps = [
     {
-      icon: "Tag",
-      title: "1. Tag Your Clothing",
-      body: "Attach a small RFID tag to each clothing item you want to track. Each tag has a unique ID that lets DressCode identify your items.",
+      icon: "Sign In",
+      title: "1. Create an Account and Sign In",
+      body: "Create your DressCode account and sign in first. Your closet, devices, and outfit history are tied to your user account, so this step comes before anything else.",
     },
     {
-      icon: "Add",
-      title: "2. Add Items to the System",
-      body: "In the web app, register each tagged item by entering details like item name, color, and type. This creates your digital closet record.",
+      icon: "Device",
+      title: "2. Register Your DressCode Unit",
+      body: "Go to the Closet page, click Register Device, then enter the device ID shown on the unit LCD after tapping the pairing card. Once saved, that device is linked to your account.",
+    },
+    {
+      icon: "Tag",
+      title: "3. Tag Your Clothing",
+      body: "Attach an RFID tag to each clothing item you want to track. Each tag has a unique ID so DressCode can recognize that specific item later.",
+    },
+    {
+      icon: "Start",
+      title: "4. Start Registration Mode",
+      body: "On the Closet page, choose your device and click Start Registration. The app will begin polling the backend and wait for a new RFID tag to be scanned.",
     },
     {
       icon: "Scan",
-      title: "3. Scan the Item",
-      body: "Hold or place the item near the DressCode scanning unit. The RFID reader and sensors detect it instantly.",
+      title: "5. Scan the RFID Tag",
+      body: "Hold the tagged clothing item near the DressCode unit. When the scan is detected, the tag appears in the app as a pending RFID ready to be connected to a clothing item.",
     },
     {
-      icon: "Sync",
-      title: "4. Your Closet Updates",
-      body: "After scanning, the item appears in your digital closet as either In Closet or Checked Out depending on status.",
+      icon: "Add",
+      title: "6. Add Item Details",
+      body: "After the RFID is captured, enter the item name, color, type, and optional image URL. Then click Add Item to save it to your digital closet.",
+    },
+    {
+      icon: "Track",
+      title: "7. Track Wear and Closet Activity",
+      body: "From that point on, future scans check items in and out automatically. Outfit Suggestions and Closet Wrapped use that scan history to power recommendations and wear insights.",
     },
   ];
 
@@ -67,12 +82,17 @@ export default function GettingStarted() {
         </p>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2">
-          {steps.map((step) => (
+          {steps.map((step, index) => (
             <div
               key={step.title}
               className="rounded-xl border border-earth-sand/30 bg-earth-bg p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-earth-moss">{step.icon}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-earth-moss">{step.icon}</p>
+                <span className="rounded-full bg-earth-card px-3 py-1 text-xs font-semibold text-earth-moss">
+                  Step {index + 1}
+                </span>
+              </div>
               <h3 className="mt-2 text-lg font-semibold text-earth-text">{step.title}</h3>
               <p className="mt-2 text-sm leading-6 text-earth-stone">{step.body}</p>
             </div>

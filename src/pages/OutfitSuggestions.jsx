@@ -495,7 +495,7 @@ export default function OutfitSuggestions({ items }) {
               Closet Wrapped
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-earth-card sm:text-4xl">
-              Your wardrobe listening report
+              Your Wardrobe Status
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-earth-card/75">
               A quick snapshot of what you wear the most, what deserves more love, and your current favorites.
