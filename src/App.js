@@ -22,6 +22,11 @@ function ScrollToTop() {
   return null;
 }
 
+function isLikelyValidDeviceId(deviceId) {
+  const trimmed = String(deviceId || "").trim();
+  return /^[A-Za-z0-9]{12}$/.test(trimmed);
+}
+
 function ToastViewport({ toasts, onDismiss }) {
   return (
     <div className="pointer-events-none fixed right-4 top-20 z-[70] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3">
@@ -447,14 +452,26 @@ function App() {
       return;
     }
 
-    const deviceId = window.prompt(
-      "Tap the pairing card, then enter the device ID shown on the LCD."
-    );
+      const deviceId = window.prompt(
+        "Tap the pairing card, then enter the device ID shown on the LCD."
+      );
 
-    if (!deviceId?.trim()) return;
+      if (!deviceId?.trim()) return;
 
-    try {
-      const response = await fetch(`${API_URL}/register-device`, {
+      if (!isLikelyValidDeviceId(deviceId)) {
+        const invalidMessage =
+          "That device ID does not look valid. Enter the exact 12-character ID shown on the LCD using only letters and numbers.";
+        setDeviceError(invalidMessage);
+        showToast({
+          type: "error",
+          title: "Invalid device ID",
+          message: invalidMessage,
+        });
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/register-device`, {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ device_id: deviceId.trim() }),
