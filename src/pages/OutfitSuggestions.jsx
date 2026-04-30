@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { TbHanger } from "react-icons/tb";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+const API_URL = process.env.REACT_APP_API_URL || "https://mydresscodecloset.com";
 
 function resolveImageUrl(value) {
   if (!value) return "";
