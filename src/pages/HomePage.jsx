@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-const HERO_TITLE = "Welcome to DressCode";
+const HERO_TITLE = "Welcome to DressCode!";
 
 function RevealOnScroll({ children, delay = 0 }) {
   const ref = useRef(null);
