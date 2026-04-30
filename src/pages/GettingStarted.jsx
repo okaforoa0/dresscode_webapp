@@ -49,7 +49,7 @@ export default function GettingStarted() {
     {
       icon: "Add",
       title: "6. Add Item Details",
-      body: "After the RFID is captured, enter the item name, color, type, and optional image URL. Then click Add Item to save it to your digital closet.",
+      body: "After the RFID is captured, enter the item name, color, type, and optional clothing photo. Then click Add Item to save it to your digital closet.",
     },
     {
       icon: "Track",

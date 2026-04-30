@@ -72,7 +72,8 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("");
   const [newType, setNewType] = useState("");
-  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [devices, setDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -596,22 +597,25 @@ function App() {
       type: newType || "-",
       is_checked_out: 0,
       rfid_tag: pendingRfidTag || `${Date.now()}`,
-      image_url: newImageUrl || "",
+      image_url: newPhotoPreview || "",
     };
 
     if (isAuthenticated) {
       try {
+        const formData = new FormData();
+        formData.append("rfid_tag", pendingRfidTag);
+        formData.append("item_name", newName);
+        formData.append("color", newColor || "-");
+        formData.append("type", newType || "-");
+        formData.append("description", "");
+        if (newPhotoFile) {
+          formData.append("photo", newPhotoFile);
+        }
+
         const response = await fetch(`${API_URL}/add-item`, {
           method: "POST",
-          headers: authHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            rfid_tag: pendingRfidTag,
-            item_name: newName,
-            color: newColor || "-",
-            type: newType || "-",
-            description: "",
-            image_url: newImageUrl || "",
-          }),
+          headers: authHeaders(),
+          body: formData,
         });
         const data = await response.json().catch(() => ({}));
 
@@ -653,7 +657,8 @@ function App() {
     setNewName("");
     setNewColor("");
     setNewType("");
-    setNewImageUrl("");
+    setNewPhotoFile(null);
+    setNewPhotoPreview("");
   }
 
   async function handleToggle(id) {
@@ -870,8 +875,10 @@ function App() {
                       setNewColor={setNewColor}
                       newType={newType}
                       setNewType={setNewType}
-                      newImageUrl={newImageUrl}
-                      setNewImageUrl={setNewImageUrl}
+                      newPhotoFile={newPhotoFile}
+                      setNewPhotoFile={setNewPhotoFile}
+                      newPhotoPreview={newPhotoPreview}
+                      setNewPhotoPreview={setNewPhotoPreview}
                       handleAdd={handleAdd}
                       onToggle={handleToggle}
                       onRemove={handleRemove}

@@ -25,8 +25,10 @@ export default function ClosetPage({
   setNewColor,
   newType,
   setNewType,
-  newImageUrl,
-  setNewImageUrl,
+  newPhotoFile,
+  setNewPhotoFile,
+  newPhotoPreview,
+  setNewPhotoPreview,
   handleAdd,
   onToggle,
   onRemove,
@@ -182,8 +184,10 @@ export default function ClosetPage({
         setNewColor={setNewColor}
         newType={newType}
         setNewType={setNewType}
-        newImageUrl={newImageUrl}
-        setNewImageUrl={setNewImageUrl}
+        newPhotoFile={newPhotoFile}
+        setNewPhotoFile={setNewPhotoFile}
+        newPhotoPreview={newPhotoPreview}
+        setNewPhotoPreview={setNewPhotoPreview}
         handleAdd={handleAdd}
         pendingRfidTag={pendingRfidTag}
         isRegistrationMode={isRegistrationMode}

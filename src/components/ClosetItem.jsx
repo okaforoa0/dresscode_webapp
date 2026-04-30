@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { TbHanger } from "react-icons/tb";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+
+function resolveImageUrl(value) {
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value) || value.startsWith("blob:") || value.startsWith("data:")) {
+    return value;
+  }
+  return `${API_URL}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 export default function ClosetItem({ item, onToggle, isConnected, onRemove }) {
-  const imageUrl = item.image_url || item.Image_URL || "";
+  const imageUrl = resolveImageUrl(item.image_url || item.Image_URL || "");
   const [hasImageError, setHasImageError] = useState(false);
   const statusLabel = item.is_checked_out ? "Checked out" : "In closet";
   const statusClasses = item.is_checked_out
@@ -29,7 +39,7 @@ export default function ClosetItem({ item, onToggle, isConnected, onRemove }) {
             <div>
               <p className="text-sm font-semibold text-earth-text">No image added</p>
               <p className="mt-1 text-xs text-earth-stone">
-                Add an image URL when saving this item.
+                Upload a photo when saving this item.
               </p>
             </div>
           </div>

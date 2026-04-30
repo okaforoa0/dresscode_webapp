@@ -4,6 +4,14 @@ import { TbHanger } from "react-icons/tb";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
 
+function resolveImageUrl(value) {
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value) || value.startsWith("blob:") || value.startsWith("data:")) {
+    return value;
+  }
+  return `${API_URL}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 function LoadingCard({ className = "" }) {
   return (
     <div className={`animate-pulse rounded-[1.5rem] border border-earth-sand/30 bg-earth-card/80 p-5 ${className}`}>
@@ -279,7 +287,7 @@ function WrappedItemCard({ title, item, footer }) {
     );
   }
 
-  const imageUrl = item.image_url || item.Image_URL || "";
+  const imageUrl = resolveImageUrl(item.image_url || item.Image_URL || "");
 
   return (
     <div className="rounded-[1.75rem] border border-earth-sand/30 bg-earth-card/85 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
