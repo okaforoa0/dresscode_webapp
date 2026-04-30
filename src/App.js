@@ -849,8 +849,8 @@ function App() {
                 canAccessProtected ? (
                   <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
                     <div className="mb-6 rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                      <h1 className="flex items-center justify-center gap-2 text-center text-3xl font-semibold tracking-tight text-earth-text">
-                        <TbHanger className="text-3xl text-earth-moss" />
+                      <h1 className="flex items-center justify-center gap-3 text-center text-4xl font-semibold tracking-tight text-earth-text sm:text-5xl">
+                        <TbHanger className="text-4xl text-earth-moss sm:text-5xl" />
                         <span>Your Closet</span>
                       </h1>
 
