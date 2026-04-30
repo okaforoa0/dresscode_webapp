@@ -29,6 +29,7 @@ export default function ClosetPage({
   setNewPhotoFile,
   newPhotoPreview,
   setNewPhotoPreview,
+  isSubmittingItem,
   handleAdd,
   onToggle,
   onRemove,
@@ -188,6 +189,7 @@ export default function ClosetPage({
         setNewPhotoFile={setNewPhotoFile}
         newPhotoPreview={newPhotoPreview}
         setNewPhotoPreview={setNewPhotoPreview}
+        isSubmittingItem={isSubmittingItem}
         handleAdd={handleAdd}
         pendingRfidTag={pendingRfidTag}
         isRegistrationMode={isRegistrationMode}

@@ -61,6 +61,7 @@ export default function AddItemForm({
   setNewPhotoFile,
   newPhotoPreview,
   setNewPhotoPreview,
+  isSubmittingItem = false,
   handleAdd,
   pendingRfidTag = "",
   isRegistrationMode = false,
@@ -68,7 +69,7 @@ export default function AddItemForm({
 }) {
   const lastAutoColorRef = useRef("");
   const lastAutoTypeRef = useRef("");
-  const isAddDisabled = requiresRfid && !pendingRfidTag;
+  const isAddDisabled = isSubmittingItem || (requiresRfid && !pendingRfidTag);
 
   useEffect(() => {
     return () => {
@@ -123,7 +124,9 @@ export default function AddItemForm({
       className="rounded-xl bg-earth-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
     >
       <div className="mb-4 rounded-xl bg-earth-bg p-4 text-sm text-earth-stone">
-        {pendingRfidTag ? (
+        {isSubmittingItem ? (
+          "Uploading item and photo now. This can take a moment on mobile."
+        ) : pendingRfidTag ? (
           <span>
             RFID captured: <strong className="text-earth-text">{pendingRfidTag}</strong>. Add the
             item details below.
@@ -141,6 +144,7 @@ export default function AddItemForm({
         <input
           value={newName}
           onChange={(e) => handleNameChange(e.target.value)}
+          disabled={isSubmittingItem}
           placeholder="Item name (e.g., Blue Hoodie)"
           className="rounded-lg border border-earth-sand/40 bg-earth-card px-3 py-2 text-sm text-earth-text outline-none transition-all duration-200 placeholder:text-earth-stone focus:border-earth-moss focus:ring-2 focus:ring-earth-sand/50"
         />
@@ -148,6 +152,7 @@ export default function AddItemForm({
         <input
           value={newColor}
           onChange={(e) => setNewColor(e.target.value)}
+          disabled={isSubmittingItem}
           list="item-color-options"
           placeholder="Color (e.g., Blue)"
           className="rounded-lg border border-earth-sand/40 bg-earth-card px-3 py-2 text-sm text-earth-text outline-none transition-all duration-200 placeholder:text-earth-stone focus:border-earth-moss focus:ring-2 focus:ring-earth-sand/50"
@@ -161,6 +166,7 @@ export default function AddItemForm({
         <input
           value={newType}
           onChange={(e) => setNewType(e.target.value)}
+          disabled={isSubmittingItem}
           list="item-type-options"
           placeholder="Type (e.g., Hoodie)"
           className="rounded-lg border border-earth-sand/40 bg-earth-card px-3 py-2 text-sm text-earth-text outline-none transition-all duration-200 placeholder:text-earth-stone focus:border-earth-moss focus:ring-2 focus:ring-earth-sand/50"
@@ -171,7 +177,7 @@ export default function AddItemForm({
           ))}
         </datalist>
 
-        <label className="flex cursor-pointer flex-col justify-center rounded-lg border border-dashed border-earth-sand/60 bg-earth-bg px-4 py-3 text-sm text-earth-stone transition-all duration-200 hover:border-earth-moss hover:bg-earth-sand/20 sm:col-span-2 lg:col-span-3">
+        <label className={`flex flex-col justify-center rounded-lg border border-dashed border-earth-sand/60 bg-earth-bg px-4 py-3 text-sm text-earth-stone transition-all duration-200 sm:col-span-2 lg:col-span-3 ${isSubmittingItem ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-earth-moss hover:bg-earth-sand/20"}`}>
           <span className="font-medium text-earth-text">
             {newPhotoFile ? newPhotoFile.name : "Upload a clothing photo"}
           </span>
@@ -181,6 +187,7 @@ export default function AddItemForm({
           <input
             type="file"
             accept="image/*"
+            disabled={isSubmittingItem}
             onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
             className="sr-only"
           />
@@ -191,7 +198,7 @@ export default function AddItemForm({
           disabled={isAddDisabled}
           className="rounded-lg bg-earth-moss px-4 py-2 text-sm font-semibold text-earth-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-earth-sage hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isAddDisabled ? "Scan RFID First" : "Add Item"}
+          {isSubmittingItem ? "Uploading Item..." : isAddDisabled ? "Scan RFID First" : "Add Item"}
         </button>
       </div>
 
@@ -208,6 +215,7 @@ export default function AddItemForm({
             </div>
             <button
               type="button"
+              disabled={isSubmittingItem}
               onClick={() => handlePhotoChange(null)}
               className="rounded-md px-2 py-1 text-xs font-semibold text-earth-moss transition-colors hover:text-earth-pine"
             >

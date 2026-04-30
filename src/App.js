@@ -74,6 +74,7 @@ function App() {
   const [newType, setNewType] = useState("");
   const [newPhotoFile, setNewPhotoFile] = useState(null);
   const [newPhotoPreview, setNewPhotoPreview] = useState("");
+  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [devices, setDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -583,6 +584,7 @@ function App() {
 
   async function handleAdd(e) {
     e.preventDefault();
+    if (isSubmittingItem) return;
     if (!newName.trim()) return;
     if (isAuthenticated && !pendingRfidTag) {
       setDeviceError("Start registration and scan an RFID tag before adding this item.");
@@ -601,6 +603,7 @@ function App() {
     };
 
     if (isAuthenticated) {
+      setIsSubmittingItem(true);
       try {
         const formData = new FormData();
         formData.append("rfid_tag", pendingRfidTag);
@@ -644,14 +647,18 @@ function App() {
           title: "Saved locally",
           message: `${newName.trim()} was stored on this device for now.`,
         });
+      } finally {
+        setIsSubmittingItem(false);
       }
     } else {
+      setIsSubmittingItem(true);
       setItems([newItem, ...items]);
       showToast({
         type: "success",
         title: "Item added",
         message: `${newName.trim()} was added to your closet.`,
       });
+      setIsSubmittingItem(false);
     }
 
     setNewName("");
@@ -879,6 +886,7 @@ function App() {
                       setNewPhotoFile={setNewPhotoFile}
                       newPhotoPreview={newPhotoPreview}
                       setNewPhotoPreview={setNewPhotoPreview}
+                      isSubmittingItem={isSubmittingItem}
                       handleAdd={handleAdd}
                       onToggle={handleToggle}
                       onRemove={handleRemove}
