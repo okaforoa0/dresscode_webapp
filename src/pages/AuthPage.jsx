@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+//const API_URL = process.env.REACT_APP_API_URL || "http://184.73.245.154:5000";
+const API_URL = process.env.REACT_APP_API_URL || "https://mydresscodecloset.com";
 
 const AUTH_ENDPOINTS = {
   login: [
