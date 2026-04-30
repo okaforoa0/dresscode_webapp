@@ -72,39 +72,65 @@ async function compressImage(file) {
   const dataUrl = await fileToDataUrl(file);
   const image = await loadImage(dataUrl);
 
-  const maxDimension = 1400;
-  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-  const targetWidth = Math.max(1, Math.round(image.width * scale));
-  const targetHeight = Math.max(1, Math.round(image.height * scale));
+  const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+  const targetMaxBytes = 1024 * 1024;
+  const dimensionAttempts = [1200, 1000, 900, 800];
+  const qualityAttempts =
+    mimeType === "image/png" ? [undefined] : [0.82, 0.76, 0.7, 0.64, 0.58];
 
-  const canvas = document.createElement("canvas");
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  let compressedBlob = null;
 
-  const context = canvas.getContext("2d");
+  for (const maxDimension of dimensionAttempts) {
+    const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+    const targetWidth = Math.max(1, Math.round(image.width * scale));
+    const targetHeight = Math.max(1, Math.round(image.height * scale));
 
-  if (!context) {
-    throw new Error("Image compression is not supported in this browser.");
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Image compression is not supported in this browser.");
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    for (const quality of qualityAttempts) {
+      const candidateBlob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Image compression failed."));
+              return;
+            }
+            resolve(blob);
+          },
+          mimeType,
+          quality
+        );
+      });
+
+      compressedBlob = candidateBlob;
+
+      if (candidateBlob.size <= targetMaxBytes) {
+        break;
+      }
+    }
+
+    if (compressedBlob && compressedBlob.size <= targetMaxBytes) {
+      break;
+    }
   }
 
-  context.drawImage(image, 0, 0, targetWidth, targetHeight);
+  if (!compressedBlob) {
+    throw new Error("Image compression failed.");
+  }
 
-  const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
-  const quality = mimeType === "image/png" ? undefined : 0.82;
-
-  const compressedBlob = await new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error("Image compression failed."));
-          return;
-        }
-        resolve(blob);
-      },
-      mimeType,
-      quality
-    );
-  });
+  if (compressedBlob.size > targetMaxBytes) {
+    throw new Error("This photo is still over 1 MB after optimization. Please choose a smaller image.");
+  }
 
   const originalName = file.name.replace(/\.[^.]+$/, "");
   const extension = mimeType === "image/png" ? "png" : "jpg";
@@ -192,7 +218,7 @@ export default function AddItemForm({
       console.error("Photo compression failed:", error);
       setNewPhotoFile(null);
       setNewPhotoPreview("");
-      setPhotoError("We could not prepare that photo. Try a different image.");
+      setPhotoError(error.message || "We could not prepare that photo. Try a different image.");
     } finally {
       setIsProcessingPhoto(false);
     }
